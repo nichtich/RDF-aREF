@@ -13,7 +13,6 @@ sub decode {
     my @triples;
     RDF::aREF::Decoder->new(
         callback => sub {
-            #note explain \@_;
             push @triples, join " ", map { 
                 (ref $_ ? '?'.$$_ : $_) // '' 
             } @_;
@@ -93,7 +92,7 @@ test_decode $_, "?1 ${_rdf}type ${_foaf}Person\n$alice ${_foaf}knows ?1" for
     { $alice => { foaf_knows => { _id => '_:1', a => 'foaf:Person' } } },
     { $alice => { foaf_knows => '_:1' }, '_:1' => { a => 'foaf:Person' } },
 ;
-    
+
 # TODO: more blank nodes
 
 # TODO: error handling

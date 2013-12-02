@@ -1,7 +1,7 @@
+use strict;
 package RDF::aREF::Decoder;
 #ABSTRACT: Decode another RDF Encoding Form (to RDF triples)
 #VERSION
-use strict;
 use RDF::NS;
 use v5.12;
 use feature 'unicode_strings';
@@ -19,7 +19,8 @@ sub new {
 
     bless {
         ns       => $options{ns},
-        callback => $options{callback} // sub { }
+        callback => $options{callback} // sub { },
+        error    => $options{error} // sub { say STDERR $_[0] },
     }, $class;
 }
 
@@ -114,7 +115,7 @@ sub predicate_map {
                 } elsif ( /^($Prefix)?:($Name)$/ ) {
                     push @object, $self->prefixed_name($1,$2) // next;
                 } elsif ( /^(.*)@([a-z]{2,8}(-[a-z0-9]{1,8})*)?$/i ) {
-                    @object = ($1, lc($2));
+                    @object = ($1, defined $2 ? lc($2) : undef);
                 } elsif ( /^(.*?)[\^][\^]?($Prefix)?:($Name)$/ ) {
                     my $datatype = $self->prefixed_name($2,$3) // next;
                     if ($datatype eq 'http://www.w3.org/2001/XMLSchema#string') {
@@ -132,7 +133,7 @@ sub predicate_map {
                 } elsif ( /^[a-z][a-z0-9+.-]*:/ ) {
                     @object = $self->iri($_) // next;
                 } else {
-                    @object = ($_,'');
+                    @object = ($_,undef);
                 }
                 $self->triple( $subject, $predicate, @object );
             } else {
@@ -175,7 +176,7 @@ sub resource {
 sub prefixed_name {
     my ($self, $prefix, $name) = @_;
     my $base = $self->{ns}{$prefix // ''}
-        // return $self->error("undefined prefix: $prefix");
+        // return $self->error("unknown prefix: $prefix");
     $self->iri($base.$name);
 }
 
@@ -185,7 +186,7 @@ sub triple {
 }
 
 sub error {
-    say STDERR $_[1];
+    $_[0]->{error}->($_[1]); # TODO: also pass location path
     return;
 }
 
