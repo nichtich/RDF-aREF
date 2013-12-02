@@ -20,12 +20,14 @@ my @tests = (
     '123^^<xsd:integer>' => [ '123', undef, "xsd:integer" ],
     '忍者@ja' => [ '忍者', 'ja' ],
     'Ninja@en@' => [ 'Ninja@en', undef ],
-    'x:bar' => 'unknown prefix: x',
-    '123^x:bar' => 'unknown prefix: x',
     'rdf:type' => [ 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type' ],
     '<rdf:type>' => [ 'rdf:type' ],
     'geo:48.2010,16.3695,183' => [ 'geo:48.2010,16.3695,183' ],
     'geo:Point' => [ 'http://www.w3.org/2003/01/geo/wgs84_pos#Point' ],
+  # errors
+    'x:bar' => 'unknown prefix: x',
+    '123^x:bar' => 'unknown prefix: x',
+    \"" => 'object must not be reference to SCALAR',
 );
 
 while (defined (my $input = shift @tests)) {

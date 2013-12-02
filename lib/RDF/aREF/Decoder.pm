@@ -137,7 +137,7 @@ sub predicate_map {
                 }
                 $self->triple( $subject, $predicate, @object );
             } else {
-                $self->error("object must be string or map, not ".ref $_);
+                $self->error('object must not be reference to '.ref $_);
             }
         }
     }
