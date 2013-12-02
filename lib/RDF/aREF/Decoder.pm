@@ -112,11 +112,11 @@ sub predicate_map {
                     push @object, $self->iri($1) // next;
                 } elsif ( /^_:([a-zA-Z0-9]+)$/ ) {
                     push @object, $self->blank_identifier($1);
-                } elsif ( /^($Prefix)?:($Name)$/ ) {
+                } elsif ( /^($Prefix)?:($Name)$/o ) {
                     push @object, $self->prefixed_name($1,$2) // next;
                 } elsif ( /^(.*)@([a-z]{2,8}(-[a-z0-9]{1,8})*)?$/i ) {
                     @object = ($1, defined $2 ? lc($2) : undef);
-                } elsif ( /^(.*?)[\^][\^]?($Prefix)?:($Name)$/ ) {
+                } elsif ( /^(.*?)[\^][\^]?($Prefix)?:($Name)$/o ) {
                     my $datatype = $self->prefixed_name($2,$3) // next;
                     if ($datatype eq 'http://www.w3.org/2001/XMLSchema#string') {
                         @object = ($1,undef);
@@ -153,23 +153,19 @@ sub iri {
     }
 }
 
-=head2 resource( $string )
-
-Returns an IRI (as string), a blank node (as string reference), or undef.
-
-=cut
+# Returns an IRI (as string), a blank node (as string reference), or undef.
 sub resource { 
-    my ($self, $_) = @_;
-    if ( /^<(.+)>$/ ) {
+    my ($self, $r) = @_;
+    if ( $r =~ /^<(.+)>$/ ) {
         $self->iri($1);
-    } elsif ( /^_:([a-zA-Z0-9]+)$/ ) {
+    } elsif ( $r =~ /^_:([a-zA-Z0-9]+)$/ ) {
         $self->blank_identifier($1);
-    } elsif ( /^(($Prefix)?[:_])?($Name)$/ ) {
+    } elsif ( $r =~ /^(($Prefix)?[:_])?($Name)$/o ) {
         $self->prefixed_name($2,$3);
-    } elsif ( qr{^[a-z][a-z0-9+.-]*:} )  {
-        $self->iri($_);
+    } elsif ( $r =~ /^[a-z][a-z0-9+.-]*:/ )  {
+        $self->iri($r);
     } else {
-        $self->error("invalid IRI: $_");
+        undef;
     }
 }
 
