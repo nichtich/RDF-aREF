@@ -1,14 +1,17 @@
-RDF::aREF - another RDF Encoding Form
+This repository contains the Perl module **RDF::aREF**.
 
-See <http://gbv.github.io/aREF/> for the current specification of aREF.
-
-This [CPAN distribution](https://metacpan.org/release/RDF-aREF) is in an
-early state of development. Feedback and contributions are very welcome at
+Feedback and contributions are very welcome at
 <https://github.com/nichtich/RDF-aREF>!
+
+See <http://gbv.github.io/aREF/> for 
+the current specification of *another RDF Encoding Form (aREF)*
+
+See <https://metacpan.org/release/RDF-aREF> for
+the current release of this module.
 
 # Status
 
 [![Build
 Status](https://travis-ci.org/nichtich/RDF-aREF.png)](https://travis-ci.org/nichtich/RDF-aREF)
-[![Coverage Status](https://coveralls.io/repos/nichtich/RDF-aREF/badge.png?branch=devel)](https://coveralls.io/r/nichtich/RDF-aREF?branch=devel)
+[![Coverage Status](https://coveralls.io/repos/nichtich/RDF-aREF/badge.png)](https://coveralls.io/r/nichtich/RDF-aREF)
 [![Kwalitee Score](http://cpants.cpanauthors.org/dist/RDF-aREF.png)](http://cpants.cpanauthors.org/dist/RDF-aREF)
