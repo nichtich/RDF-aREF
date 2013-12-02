@@ -19,7 +19,7 @@ script:
     - dzil smoke --release --author
 
 after_success:
-    - cpanm --quiet --notest --skip-satisfied Dist::Zilla::App::Command::cover Devel::Cover::Report::Coveralls
+    - cpanm --quiet --notest --skip-satisfied Dist::Zilla::App::Command::cover Devel::Cover::Report::Coveralls RDF::Trine
     - dzil cover -test
     - dzil cover -report coveralls
 
