@@ -24,10 +24,6 @@ my @tests = (
     '<rdf:type>' => [ 'rdf:type' ],
     'geo:48.2010,16.3695,183' => [ 'geo:48.2010,16.3695,183' ],
     'geo:Point' => [ 'http://www.w3.org/2003/01/geo/wgs84_pos#Point' ],
-  # errors
-    'x:bar' => 'unknown prefix: x',
-    '123^x:bar' => 'unknown prefix: x',
-    \"" => 'object must not be reference to SCALAR',
 );
 
 while (defined (my $input = shift @tests)) {
@@ -36,11 +32,7 @@ while (defined (my $input = shift @tests)) {
         { '<x:subject>' => { '<x:predicate>' => $input } },
         callback => sub { shift; shift; $object = \@_; },
         error    => sub { $error = shift };
-    if (ref $expect) {
-        is_deeply $object, $expect, "\"$input\"";
-    } else {
-        is $error, $expect, $expect;
-    }
+    is_deeply $object, $expect, "\"$input\"";
 }
 
 done_testing;

@@ -66,14 +66,14 @@ sub decode {
     $self->namespace_map( $map->{"_ns"} );
 
     if (exists $map->{_id}) {
-        my $subject = $self->resource( $map->{_id} );
+        my $subject = $self->resource($map->{_id},\'subject');
         $self->predicate_map( $subject, $map ) if $subject;
     } else {
-        for my $key (grep { $_ ne '_ns' } %$map) {
-            my $subject = $self->resource($key) // next;
+        for my $key (grep { $_ ne '_ns' } keys %$map) {
+            my $subject = $self->resource($key,\'subject') // next;
             my $predicates = $map->{$key};
-            if (exists $predicates->{_id} and $self->resource( $predicates->{_id} ) ne $subject) {
-                $self->error("inconsistent _id");
+            if (exists $predicates->{_id} and $self->resource($predicates->{_id}) ne $subject) {
+                $self->error("subject _id must be <$subject>");
             } else {
                 $self->predicate_map( $subject, $predicates );
             }
@@ -89,15 +89,27 @@ sub predicate_map {
     for (keys %$map) {
         next if $_ eq '_id' or $_ eq '_ns';
 
-        my $predicate = $_ eq 'a'
-            ? "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
-            : $self->resource($_) // next;
+        my $predicate = do {
+            if ($_ eq 'a') {
+                "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
+            } elsif ( /^<(.+)>$/ ) {
+                $self->iri($1);
+            } elsif ( /^(($Prefix)?[:_])?($Name)$/o ) {
+                $self->prefixed_name($2,$3);
+            } elsif ( /^[a-z][a-z0-9+.-]*:/ )  {
+                $self->iri($_);
+            } else {
+                $self->error("invalid predicate IRI $_");
+                next;
+            }
+        };
 
         my $value = $map->{$_};
         foreach (ref $value eq 'ARRAY' ? @$value : $value) {
+            # TODO: undef is ignored - is this an error?
             if (ref $_ eq 'HASH') {
                 my $object = exists $_->{_id}
-                    ? ($self->resource($_->{_id}) // next)
+                    ? ($self->resource($_->{_id},\'object _id') // next)
                     : $self->blank_identifier();
 
                 $self->triple( $subject, $predicate, $object );
@@ -145,9 +157,9 @@ sub predicate_map {
 
 sub iri {
     my ($self, $iri) = @_;
-    # TODO: check RFC form 
-    if (!$iri) {
-        return $self->error("invalid IRI: $iri");
+    # TODO: check full RFC form of IRIs
+    if ( $iri !~ /^[a-z][a-z0-9+.-]*:/ ) {
+        return $self->error("invalid IRI $iri");
     } else {
         return $iri;
     }
@@ -155,7 +167,7 @@ sub iri {
 
 # Returns an IRI (as string), a blank node (as string reference), or undef.
 sub resource { 
-    my ($self, $r) = @_;
+    my ($self, $r, $expect) = @_;
     if ( $r =~ /^<(.+)>$/ ) {
         $self->iri($1);
     } elsif ( $r =~ /^_:([a-zA-Z0-9]+)$/ ) {
@@ -165,6 +177,7 @@ sub resource {
     } elsif ( $r =~ /^[a-z][a-z0-9+.-]*:/ )  {
         $self->iri($r);
     } else {
+        $self->error("invalid ".$$expect." $r") if $expect;
         undef;
     }
 }
@@ -201,9 +214,18 @@ sub blank_identifier {
 
 1;
 
+=head1 SYNOPSIS
+
+    use RDF::aREF::Decoder;
+
+    RDF::aREF::Decoder->new( %options )->decode( $aref );
+
 =head1 DESCRIPTION
 
-For each RDF triple the callback method is called with a list of following elements:
+This module implements a decoder from another RDF Encoding Form (aREF), given
+as in form of Perl arrays, hashes, and Unicode strings, to RDF triples. For
+each RDF triple the callback method (option C<callback>) is called with a list
+of three to five elements:
 
 =over
 
@@ -230,5 +252,11 @@ The object's datatype if object is a literal and datatype is not
 C<http://www.w3.org/2001/XMLSchema#string>.
 
 =back
+
+Decoding errors are passed to the option C<error>. By default an error message
+is printed to STDOUT.
+
+The option C<ns> can be used to specify default namespaces, either as hash
+reference or as version string of module L<RDF::NS>.
 
 =cut
