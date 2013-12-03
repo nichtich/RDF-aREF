@@ -1,4 +1,5 @@
 use strict;
+use warnings;
 package RDF::aREF;
 #ABSTRACT: Another RDF Encoding Form
 #VERSION

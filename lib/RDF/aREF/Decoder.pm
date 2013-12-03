@@ -1,4 +1,5 @@
 use strict;
+use warnings;
 package RDF::aREF::Decoder;
 #ABSTRACT: Decode another RDF Encoding Form (to RDF triples)
 #VERSION
