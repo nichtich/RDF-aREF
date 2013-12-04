@@ -13,11 +13,17 @@ my @errors = (
         => 'invalid subject "x"',
     { _id => '"x"', a => 'foaf:Person' }
         => 'invalid subject "x"',
+    { '0' => { a => 'foaf:Person' } }
+        => 'unknown prefix: ',
+    { _id => '0', a => 'foaf:Person' }
+        => 'unknown prefix: ',
     { [] => { a => 'foaf:Person' } }
         => qr/^invalid subject ARRAY\(/,
     { _id => [], a => 'foaf:Person' }
         => qr/^invalid subject ARRAY\(/,
     { '<x:a>' => { _id => '<x:b>', a => 'foaf:Person' } }
+        => 'subject _id must be <x:a>',
+    { '<x:a>' => { _id => undef, a => 'foaf:Person' } }
         => 'subject _id must be <x:a>',
 # invalid predicates        
     { '<x:subject>' => { bar_y => '123' } }

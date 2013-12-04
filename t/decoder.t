@@ -95,9 +95,16 @@ test_decode $_, "?1 ${_rdf}type ${_foaf}Person\n$alice ${_foaf}knows ?1" for
 
 # TODO: more blank nodes
 
-# TODO: error handling
-
-sub test_error(@) { ## no critic
+my @looks_like_error = (
+    { '0' => { a => 'foaf:Person' }, _ns => 'x:' },
+    { _id => '0', a => 'foaf:Person', _ns => 'x:' },
+);
+my $rdf;
+my $decoder = RDF::aREF::Decoder->new( callback => sub { $rdf++ } );
+foreach (@looks_like_error) {
+    $decoder->decode($_);
+    ok $rdf, 'triple';
+    $rdf = 0;
 }
 
 done_testing;

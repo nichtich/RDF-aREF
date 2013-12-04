@@ -22,6 +22,8 @@ sub new {
         ns       => $options{ns},
         callback => $options{callback} // sub { },
         error    => $options{error} // sub { say STDERR $_[0] },
+        strict   => $options{strict} // 0,
+        null     => $options{null}, # undef by default
     }, $class;
 }
 
@@ -67,10 +69,16 @@ sub decode {
     $self->namespace_map( $map->{"_ns"} );
 
     if (exists $map->{_id}) {
-        my $subject = $self->resource($map->{_id},\'subject');
-        $self->predicate_map( $subject, $map ) if $subject;
+        my $id = $map->{_id};
+        my $subject = ($id // '') ne '' ? $self->resource($id,\'subject') : undef;
+        if (defined $subject and $subject ne '') {
+            $self->predicate_map( $subject, $map );
+        } elsif ($self->{strict}) { 
+            $self->error("invalid subject $id");
+        }
     } else {
         for my $key (grep { $_ ne '_ns' } keys %$map) {
+            next if $key eq '' and !$self->{strict};
             my $subject = $self->resource($key,\'subject') // next;
             my $predicates = $map->{$key};
             if (exists $predicates->{_id} and $self->resource($predicates->{_id}) ne $subject) {
@@ -100,14 +108,22 @@ sub predicate_map {
             } elsif ( /^[a-z][a-z0-9+.-]*:/ )  {
                 $self->iri($_);
             } else {
-                $self->error("invalid predicate IRI $_");
+                $self->error("invalid predicate IRI $_")
+                    if $_ ne '' or $self->{strict};
                 next;
             }
         };
 
         my $value = $map->{$_};
+        # empty arrays are always alowed BTW
         foreach (ref $value eq 'ARRAY' ? @$value : $value) {
+
+            # ???
+            if (defined $self->{null} and $_ eq $self->{null}) {
+                $_ = undef;
+            }
             # TODO: undef is ignored - is this an error?
+
             if (ref $_ eq 'HASH') {
                 my $object = exists $_->{_id}
                     ? ($self->resource($_->{_id},\'object _id') // next)
@@ -145,6 +161,9 @@ sub predicate_map {
                     }
                 } elsif ( /^[a-z][a-z0-9+.-]*:/ ) {
                     @object = $self->iri($_) // next;
+                } elsif (!defined $_) {
+                    $self->error('object must not be null') if $self->{strict};
+                    next;
                 } else {
                     @object = ($_,undef);
                 }
@@ -224,9 +243,20 @@ sub blank_identifier {
 =head1 DESCRIPTION
 
 This module implements a decoder from another RDF Encoding Form (aREF), given
-as in form of Perl arrays, hashes, and Unicode strings, to RDF triples. For
-each RDF triple the callback method (option C<callback>) is called with a list
-of three to five elements:
+as in form of Perl arrays, hashes, and Unicode strings, to RDF triples.
+
+=head1 OPTIONS
+
+=head2 ns
+
+A default namespace map, given either as hash reference or as version string of
+module L<RDF::NS>. Set to the most recent version of RDF::NS by default, but relying
+on a default value is not recommended!
+
+=head2 callback
+
+A code reference that is called for each triple with a list of three to five
+elements:
 
 =over
 
@@ -254,10 +284,22 @@ C<http://www.w3.org/2001/XMLSchema#string>.
 
 =back
 
-Decoding errors are passed to the option C<error>. By default an error message
-is printed to STDOUT.
+=head2 error
 
-The option C<ns> can be used to specify default namespaces, either as hash
-reference or as version string of module L<RDF::NS>.
+A code reference that decoding errors are passed to. By default an error
+message is printed to STDOUT.
+
+=head2 strict
+
+Enables errors on undefined subjects, predicates, and objects. By default
+the Perl value C<undef> in any part of an encoded RDF triple will silently
+ignore the triple, so aREF structures can easily be used as templates with
+optional values.
+
+=head2 null
+
+A null object that is treated equivalent to C<undef> if found as object.  For
+instance setting this to the empty string will ignore all triples with the
+empty string as literal value. 
 
 =cut
