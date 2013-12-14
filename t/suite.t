@@ -9,22 +9,24 @@ BEGIN {
         require JSON;
         1; 
     } or do {
-        plan skip_all => "RDF::Trine or JSON not installed";
+        plan skip_all => "RDF::Trine or JSON required";
     };
 }
 
-use RDF::aREF qw(aref_to_trine_statement);
+sub slurp { 
+    local (@ARGV, $/) = @_; 
+    my $data = -e $ARGV[0] ? <> : "";
+    $data =~ s/\n$//;
+    $data;
+}
 
-find( \&check_example, 't/test-cases' );
+use RDF::aREF qw(decode_aref aref_to_trine_statement);
 
-sub slurp { local (@ARGV, $/) = @_; <>; }
-
-sub check_example {
-    return if $_ !~ /(.+)\.json$/;
-    my $name = $_;
-    my $aref = JSON::from_json(slurp("$1.json"));
-    my $nt   = slurp("$1.nt");
-    my $err  = -e "$1.err" ? slurp("$1.err") : undef;
+foreach my $file (sort <t/suite/*.json>) {
+    $file =~ s/\.json$//;
+    my $aref = JSON::from_json(slurp("$file.json"));
+    my $nt   = slurp("$file.nt");
+    my $err  = slurp("$file.err");
     my @errors;
 
     my $model = RDF::Trine::Model->new;
@@ -35,7 +37,12 @@ sub check_example {
         callback => sub {
             $model->add_statement( aref_to_trine_statement( @_ ) ) 
         }, 
-        error  => sub { push @errors, $_[0] },
+        error  => sub { 
+            my $e = shift;
+            $e =~ s/\(0x[a-z0-9]+\)//g; # refs
+            push @errors, $e;
+        },
+        strict => ($file =~ /strict/ ? 1 : 0),
     )->decode( $aref );
     # decode_as_iterator();
     # decode_as_iterator( as => 'trine_statement' ); # if (exists aref_to_$foo) ...
@@ -44,12 +51,11 @@ sub check_example {
     my $got = RDF::Trine::Serializer::NTriples::Canonical->new(
         onfail => 'truncate',
     )->serialize_model_to_string($model);
-    $got =~ s/\r//g;
+    $got =~ s/\r|\n$//g;
 
-    is $got, $nt, $name;
-    if (@errors) {
-        is join("\n", sort @errors)."\n", $err;
-    }
+    $file =~ s{.*/}{};
+    is $got, $nt, $file;
+    is join("\n", sort @errors), $err, $err;
 }
 
 done_testing;

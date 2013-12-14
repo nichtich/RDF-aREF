@@ -112,7 +112,7 @@ sub predicate_map {
                     if $_ ne '' or $self->{strict};
                 next;
             }
-        };
+        } or next;
 
         my $value = $map->{$_};
         # empty arrays are always alowed BTW

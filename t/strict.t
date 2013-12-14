@@ -3,38 +3,32 @@ use warnings;
 use Test::More;
 use RDF::aREF qw(decode_aref);
 
-my @tests = (
-    { '' => { a => 'foaf:Person' } }
-        => 'invalid subject ',
-    { _id => '', a => 'foaf:Person' },
-        => 'invalid subject ',
-    { _id => undef, a => 'foaf:Person' },
-        => 'invalid subject ',
-    { '<x:subject>' => { '' => 'object' } }
-        => 'invalid predicate IRI ',
-    { '<x:subject>' => { 'a' => undef } }
-        => 'object must not be null',
-    { '<x:subject>' => { 'a' => '' } }
-        => 'object must not be null',
-);
-
-while (defined (my $aref = shift @tests)) {
-    my ($err, $msg, $rdf) = shift @tests;
-    decode_aref $aref, 
-        error => sub { $msg = shift }, null => '', callback => sub { $rdf++ };
-    ok !defined $msg && !$rdf, 'not strict by default';
-    decode_aref $aref, 
-        error => sub { $msg = shift }, strict => 1, null => '';
-    is $msg, $err, $err;
-}
-
-my ($aref, $rdf, $err) = { '<x:subject>' => { dc_title => '' } }; 
-my $decoder = RDF::aREF::Decoder->new(
+my ($error, $rdf);
+my %handler = (
+    error    => sub { $error = shift },
     callback => sub { $rdf = shift },
-    error    => sub { $err = shift }
 );
 
-$decoder->decode($aref);
-ok($rdf && !defined $err, 'empty object allowed');
+decode_aref { '<x:subj>' => { a => undef } }, %handler;
+decode_aref { '' => { a => 'foaf:Person' } }, %handler, null => '';
+ok !$error, 'not strict by default';
+
+decode_aref { '<x:subj>' => { a => '' } }, %handler, null => '';
+ok !$rdf, 'empty string as null';
+
+decode_aref { '<x:subj>' => { a => undef } }, %handler, strict => 1;
+ok $error, 'strict makes undef error';
+
+$error = 0;
+decode_aref { '' => { a => 'foaf:Person' } }, %handler, strict => 1, null => '';
+ok $error, 'strict makes null value error';
+
+$error = 0;
+decode_aref { '<x:subj>' => { a => '' } }, %handler, strict => 1;
+ok !$error && $rdf, 'empty string not null by default';
+
+$error = 0;
+decode_aref { '' => { a => 'foaf:Person' } }, %handler, strict => 1;
+ok $error, 'empty string not null by default';
 
 done_testing;
