@@ -18,8 +18,6 @@ my @errors = (
         => 'object must not be reference to SCALAR',
 );
 
-use JSON;
-my $i=1;
 while (defined (my $aref = shift @errors)) {
     my ($expect, $got) = shift @errors;
     
