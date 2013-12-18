@@ -15,6 +15,10 @@ our $nameStartChar = $nameChar.'0-9\N{U+00B7}\N{U+0300}\N{U+036F}\N{U+203F}-\N{U
 our $Prefix = '[a-z][a-z0-9]*';
 our $Name   = "[$nameStartChar][$nameChar]*";
 
+use constant explicitIRI => qr/^<(.+)>$/;
+use constant IRIlike     => qr/^[a-z][a-z0-9+.-]*:/;
+use constant blankNode   => qr/^_:([a-zA-Z0-9]+)$/;
+
 sub new {
     my ($class, %options) = @_;
 
@@ -39,13 +43,14 @@ sub namespace_map { # sets the local namespace map
 
     if (ref $map) {
         if (ref $map eq 'HASH') {
-            for (keys %$map) {
-                my $prefix = $_ eq '_' ? '' : $_;
-                if ($prefix !~ /^([a-z][a-z0-9]*)?$/) {
+            while (my ($prefix,$namespace) = each %$map) {
+                $prefix = '' if $prefix eq '_';
+                if ($prefix !~ /^([a-z][a-z0-9+.-]*)?$/) {
                     $self->error("invalid prefix: $prefix");
-                    # TODO: validate IRI base
+                } elsif ($namespace !~ IRIlike) {
+                    $self->error("invalid namespace: $namespace");
                 } else { 
-                    $ns->{ $prefix } = $map->{$_};
+                    $ns->{$prefix} = $namespace;
                 }
             }
         } else {
@@ -105,7 +110,7 @@ sub predicate_map {
                 $self->iri($1);
             } elsif ( /^(($Prefix)?[:_])?($Name)$/o ) {
                 $self->prefixed_name($2,$3);
-            } elsif ( /^[a-z][a-z0-9+.-]*:/ )  {
+            } elsif ( $_ =~ IRIlike ) {
                 $self->iri($_);
             } else {
                 $self->error("invalid predicate IRI $_")
@@ -137,9 +142,9 @@ sub predicate_map {
             } elsif (!ref $_) {
                 my @object;
 
-                if ( /^<(.+)>$/ ) {
+                if ( $_ =~ explicitIRI ) {
                     push @object, $self->iri($1) // next;
-                } elsif ( /^_:([a-zA-Z0-9]+)$/ ) {
+                } elsif ( $_ =~ blankNode ) {
                     push @object, $self->blank_identifier($1);
                 } elsif ( /^($Prefix)?:($Name)$/o ) {
                     push @object, $self->prefixed_name($1,$2) // next;
@@ -159,7 +164,7 @@ sub predicate_map {
                     } else {
                         @object = ($1,undef,$datatype);
                     }
-                } elsif ( /^[a-z][a-z0-9+.-]*:/ ) {
+                } elsif ( $_ =~ IRIlike ) {
                     @object = $self->iri($_) // next;
                 } elsif (!defined $_) {
                     $self->error('object must not be null') if $self->{strict};
@@ -178,7 +183,7 @@ sub predicate_map {
 sub iri {
     my ($self, $iri) = @_;
     # TODO: check full RFC form of IRIs
-    if ( $iri !~ /^[a-z][a-z0-9+.-]*:/ ) {
+    if ( $iri !~ IRIlike ) {
         return $self->error("invalid IRI $iri");
     } else {
         return $iri;
@@ -188,13 +193,13 @@ sub iri {
 # Returns an IRI (as string), a blank node (as string reference), or undef.
 sub resource { 
     my ($self, $r, $expect) = @_;
-    if ( $r =~ /^<(.+)>$/ ) {
+    if ( $r =~ explicitIRI ) {
         $self->iri($1);
-    } elsif ( $r =~ /^_:([a-zA-Z0-9]+)$/ ) {
+    } elsif ( $r =~ blankNode ) {
         $self->blank_identifier($1);
     } elsif ( $r =~ /^(($Prefix)?[:_])?($Name)$/o ) {
         $self->prefixed_name($2,$3);
-    } elsif ( $r =~ /^[a-z][a-z0-9+.-]*:/ )  {
+    } elsif ( $r =~ IRIlike )  {
         $self->iri($r);
     } else {
         $self->error("invalid ".$$expect." $r") if $expect;

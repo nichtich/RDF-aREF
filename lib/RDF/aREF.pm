@@ -10,6 +10,12 @@ use parent 'Exporter';
 our @EXPORT = qw(decode_aref);
 our @EXPORT_OK = qw(aref_to_trine_statement decode_aref);
 
+sub decode_aref(@) { ## no critic
+    my ($aref, %options) = @_;
+    RDF::aREF::Decoder->new(%options)->decode($aref);
+}
+
+# experimental
 # TODO: test this
 sub aref_to_trine_statement {
     require RDF::Trine::Statement;
@@ -31,11 +37,6 @@ sub aref_to_trine_statement {
             } 
         }
     );
-}
-
-sub decode_aref(@) { ## no critic
-    my ($aref, %options) = @_;
-    RDF::aREF::Decoder->new(%options)->decode($aref);
 }
 
 1;
@@ -69,14 +70,19 @@ sub decode_aref(@) { ## no critic
 
 =head1 DESCRIPTION
 
-This module decodes B<another RDF Encoding Form (aREF)> to RDF triples.
+aREF (L<another RDF Encoding Form|http://gbv.github.io/aREF/>) is an encoding
+of RDF graphs in form of arrays, hashes, and Unicode strings. This module 
+implements decoding from aREF data to RDF triples.
 
 =head1 EXPORTED FUNCTIONS
 
 =head2 decode_aref ( $aref, [ %options ] )
 
-Decodes an aREF document given as hash referece. Options are passed to the
-constructor of L<RDF::aREF::Decoder>.
+Decodes an aREF document given as hash referece. This function is a shortcut for
+
+    RDF::aREF::Decoder->new(%options)->decode($aref)
+
+See L<RDF::aREF::Decoder> for possible options.
 
 =head1 SEE ALSO
 
@@ -92,7 +98,7 @@ aREF is being specified at L<http://github.com/gbv/aREF>.
 
 =item
 
-See L<RDF::YAML> for an outdated similar RDF encoding in YAML.
+See L<RDF::YAML> for a similar (outdated) RDF encoding in YAML.
 
 =back
 
