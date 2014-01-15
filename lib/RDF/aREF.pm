@@ -48,6 +48,8 @@ sub aref_to_trine_statement {
             ...
         }
     );
+    
+    decode_aref( $rdf, callback => $model ); # decode into RDF::Trine::Model
 
 =head1 DESCRIPTION
 
