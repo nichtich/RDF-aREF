@@ -6,7 +6,7 @@ package RDF::aREF::Decoder;
 use RDF::NS;
 use v5.12;
 use feature 'unicode_strings';
-use Scalar::Util qw(refaddr);
+use Scalar::Util qw(refaddr blessed);
 
 no warnings 'uninitialized';
 
@@ -22,9 +22,19 @@ use constant blankNode   => qr/^_:([a-zA-Z0-9]+)$/;
 sub new {
     my ($class, %options) = @_;
 
+    # facilitate use of this module together with RDF::Trine
+    my $callback = $options{callback} // sub { };
+    if (blessed $callback and $callback->isa('RDF::Trine::Model')) {
+        require RDF::Trine::Statement;
+        my $model = $callback;
+        $callback = sub {
+            $model->add_statement( aref_to_trine_statement( @_ ) )
+        };
+    }
+
     bless {
         ns       => $options{ns},
-        callback => $options{callback} // sub { },
+        callback => $callback,
         error    => $options{error} // sub { say STDERR $_[0] },
         strict   => $options{strict} // 0,
         null     => $options{null}, # undef by default
@@ -236,6 +246,28 @@ sub blank_identifier {
 
     return \$bnode;
 }
+ 
+# TODO: test this
+sub aref_to_trine_statement {
+    RDF::Trine::Statement->new(
+        # subject
+        ref $_[0] ? RDF::Trine::Node::Blank->new(${$_[0]})
+            : RDF::Trine::Node::Resource->new($_[0]),
+        # predicate
+        RDF::Trine::Node::Resource->new($_[1]),
+        # object
+        do {
+            if (ref $_[2]) {
+                RDF::Trine::Node::Blank->new(${$_[2]});
+            } elsif (@_ == 3) {
+                RDF::Trine::Node::Resource->new($_[2]);
+            } else {
+                RDF::Trine::Node::Literal->new($_[2],$_[3],$_[4]);
+            } 
+        }
+    );
+}
+
 
 1;
 
@@ -288,6 +320,9 @@ The object's datatype if object is a literal and datatype is not
 C<http://www.w3.org/2001/XMLSchema#string>.
 
 =back
+
+For convenience an instance of L<RDF::Trine::Model> can also be used as
+callback.
 
 =head2 error
 
