@@ -83,14 +83,14 @@ test_decode { $alice => { foaf_name => "Alice\@$_" } },
     "$alice ${_foaf}name Alice ".lc($_) for qw(en en-US abcdefgh-x-12345678);
 
 # blank nodes
-test_decode $_, "$alice ${_foaf}knows ?1" for
+test_decode $_, "$alice ${_foaf}knows ?b1" for
     { $alice => { foaf_knows => { } } },
-    { $alice => { foaf_knows => { _id => '_:1' } } },
+    { $alice => { foaf_knows => { _id => '_:b1' } } },
 ;
-test_decode $_, "?1 ${_rdf}type ${_foaf}Person\n$alice ${_foaf}knows ?1" for
+test_decode $_, "?b1 ${_rdf}type ${_foaf}Person\n$alice ${_foaf}knows ?b1" for
     { $alice => { foaf_knows => { a => 'foaf:Person' } } },
-    { $alice => { foaf_knows => { _id => '_:1', a => 'foaf:Person' } } },
-    { $alice => { foaf_knows => '_:1' }, '_:1' => { a => 'foaf:Person' } },
+    { $alice => { foaf_knows => { _id => '_:b1', a => 'foaf:Person' } } },
+    { $alice => { foaf_knows => '_:b1' }, '_:b1' => { a => 'foaf:Person' } },
 ;
 
 # TODO: more blank nodes

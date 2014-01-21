@@ -240,9 +240,8 @@ sub blank_identifier {
     # TODO: preserve ids on request
 
     my $bnode = defined $id 
-        ? $self->{blank_node_ids}{$id} // 
-          ($self->{blank_node_ids}{$id} = ++$self->{blank_node_count})
-        : ++$self->{blank_node_count};
+        ? ($self->{blank_node_ids}{$id} //= 'b' . ++$self->{blank_node_count})
+        : 'b' . ++$self->{blank_node_count};
 
     return \$bnode;
 }
