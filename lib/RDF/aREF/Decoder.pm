@@ -220,7 +220,9 @@ sub resource {
 sub prefixed_name {
     my ($self, $prefix, $name) = @_;
     my $base = $self->{ns}{$prefix // ''}
-        // return $self->error("unknown prefix: $prefix");
+        // return $self->error(
+            $prefix // '' ne '' 
+            ? "unknown prefix: $prefix" : "not an URI: $name");
     $self->iri($base.$name);
 }
 
