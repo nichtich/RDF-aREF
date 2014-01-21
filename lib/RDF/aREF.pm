@@ -49,7 +49,9 @@ sub aref_to_trine_statement {
         }
     );
     
-    decode_aref( $rdf, callback => $model ); # decode into RDF::Trine::Model
+    my $model = RDF::Trine::Model->new;
+    decode_aref( $rdf, callback => $model );
+    print RDF::Trine::Serializer->new('Turtle')->serialize_model_to_string($model);
 
 =head1 DESCRIPTION
 
@@ -78,6 +80,10 @@ This module was first packaged together with L<Catmandu::RDF>.
 =item
 
 aREF is being specified at L<http://github.com/gbv/aREF>.
+
+=item
+
+L<RDF::Trine> contains much more for handling RDF data in Perl.
 
 =item
 
