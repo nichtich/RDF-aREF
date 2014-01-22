@@ -31,4 +31,16 @@ decode_aref( {
 );
 is $model->size, 3, 'added another statement';
 
+# bnodes
+$model = RDF::Trine::Model->new;
+my $decoder = RDF::aREF::Decoder->new( callback => $model );
+my $aref = { _id => '<x:subject>', foaf_knows => { foaf_name => 'alice' } }; 
+$decoder->decode( $aref );
+$decoder->decode( $aref );
+is $model->size, 4, 'no bnode collision';
+is $decoder->bnode_count, 2;
+$decoder->bnode_count(1);
+$decoder->decode( $aref );
+is $model->size, 4, 'bnode collision';
+
 done_testing;

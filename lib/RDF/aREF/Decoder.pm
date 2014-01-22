@@ -39,6 +39,7 @@ sub new {
         strict       => $options{strict} // 0,
         null         => $options{null}, # undef by default
         bnode_prefix => $options{bnode_prefix} || 'b',
+        bnode_count  => $options{bnode_count} || 0,
     }, $class;
 }
 
@@ -78,8 +79,7 @@ sub namespace_map { # sets the local namespace map
 sub decode {
     my ($self, $map) = @_;
 
-    $self->{blank_node_ids} = { };
-    $self->{blank_node_count} = 0;
+    $self->{blank_node_ids} = { }; # required (?)
     $self->{visited} = { };
 
     $self->namespace_map( $map->{"_ns"} );
@@ -237,6 +237,11 @@ sub error {
     return;
 }
 
+sub bnode_count {
+    $_[0]->{bnode_count} = $_[1] if @_ > 1;
+    $_[0]->{bnode_count};
+}
+
 sub blank_identifier {
     my ($self, $id) = @_;
 
@@ -244,9 +249,9 @@ sub blank_identifier {
 
     my $bnode;
     if ( defined $id ) {
-        $bnode = ($self->{blank_node_ids}{$id} //= $self->{bnode_prefix} . ++$self->{blank_node_count});
+        $bnode = ($self->{blank_node_ids}{$id} //= $self->{bnode_prefix} . ++$self->{bnode_count});
     } else {
-        $bnode = $self->{bnode_prefix} . ++$self->{blank_node_count};
+        $bnode = $self->{bnode_prefix} . ++$self->{bnode_count};
     }
 
     return \$bnode;
@@ -351,5 +356,12 @@ empty string as literal value.
 
 A prefix for blank node identifiers. Defaults to "b", so blank node identifiers
 will be "b1", "b2", "b3" etc.
+
+=head2 bnode_counter
+
+An integer to start creating blank node identifiers with. The default value "0"
+results in blank node identifiers starting from "b1". This option can be useful
+to avoid collision of blank node identifiers when merging multiple aREF
+instances. The current counter value is accessible as accessor.
 
 =cut
