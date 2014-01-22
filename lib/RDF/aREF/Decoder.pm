@@ -33,11 +33,12 @@ sub new {
     }
 
     bless {
-        ns       => $options{ns},
-        callback => $callback,
-        error    => $options{error} // sub { say STDERR $_[0] },
-        strict   => $options{strict} // 0,
-        null     => $options{null}, # undef by default
+        ns           => $options{ns},
+        callback     => $callback,
+        error        => $options{error} // sub { say STDERR $_[0] },
+        strict       => $options{strict} // 0,
+        null         => $options{null}, # undef by default
+        bnode_prefix => $options{bnode_prefix} || 'b',
     }, $class;
 }
 
@@ -241,9 +242,12 @@ sub blank_identifier {
 
     # TODO: preserve ids on request
 
-    my $bnode = defined $id 
-        ? ($self->{blank_node_ids}{$id} //= 'b' . ++$self->{blank_node_count})
-        : 'b' . ++$self->{blank_node_count};
+    my $bnode;
+    if ( defined $id ) {
+        $bnode = ($self->{blank_node_ids}{$id} //= $self->{bnode_prefix} . ++$self->{blank_node_count});
+    } else {
+        $bnode = $self->{bnode_prefix} . ++$self->{blank_node_count};
+    }
 
     return \$bnode;
 }
@@ -342,5 +346,10 @@ optional values.
 A null object that is treated equivalent to C<undef> if found as object.  For
 instance setting this to the empty string will ignore all triples with the
 empty string as literal value. 
+
+=head2 bnode_prefix
+
+A prefix for blank node identifiers. Defaults to "b", so blank node identifiers
+will be "b1", "b2", "b3" etc.
 
 =cut

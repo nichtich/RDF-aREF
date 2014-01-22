@@ -11,13 +11,14 @@ my $alice = "http://example.org/alice";
 
 sub decode {
     my @triples;
+    my ($aref, %options) = ref $_[0] eq 'HASH' ? ($_[0]) : (@{$_[0]});
     RDF::aREF::Decoder->new(
         callback => sub {
             push @triples, join " ", map { 
                 (ref $_ ? '?'.$$_ : $_) // '' 
             } @_;
-        }
-    )->decode( $_[0] );
+        }, %options
+    )->decode( $aref );
     join "\n", sort @triples;
 }
 
@@ -87,6 +88,12 @@ test_decode $_, "$alice ${_foaf}knows ?b1" for
     { $alice => { foaf_knows => { } } },
     { $alice => { foaf_knows => { _id => '_:b1' } } },
 ;
+
+test_decode [ $_, bnode_prefix => 'x' ], "$alice ${_foaf}knows ?x1" for
+    { $alice => { foaf_knows => { } } },
+    { $alice => { foaf_knows => { _id => '_:b1' } } },
+;
+
 test_decode $_, "?b1 ${_rdf}type ${_foaf}Person\n$alice ${_foaf}knows ?b1" for
     { $alice => { foaf_knows => { a => 'foaf:Person' } } },
     { $alice => { foaf_knows => { _id => '_:b1', a => 'foaf:Person' } } },
