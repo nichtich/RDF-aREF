@@ -43,4 +43,19 @@ $decoder->bnode_count(1);
 $decoder->decode( $aref );
 is $model->size, 4, 'bnode collision';
 
+# errors
+my $error;
+decode_aref( {
+        _id => 'isbn:123', 
+        rdfs_seeAlso => [
+            'isbn:456 x',  # looks like an IRI to aREF but rejected by Trine
+            'isbn:789'
+        ]
+    }, 
+    callback => $model, error => sub { $error = shift }
+);
+ok $error, "bad IRI";
+is $model->size, 5, 'ignored illformed URI';
+
+
 done_testing;
