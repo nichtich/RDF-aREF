@@ -1,0 +1,31 @@
+---
+abstract: 'Another RDF Encoding Form'
+author:
+  - 'Jakob Voß'
+build_requires:
+  JSON: 0
+  RDF::Trine: 0
+configure_requires:
+  ExtUtils::MakeMaker: 6.30
+dynamic_config: 0
+generated_by: 'Dist::Zilla version 5.006, CPAN::Meta::Converter version 2.132830'
+license: perl
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+name: RDF-aREF
+provides:
+  RDF::aREF:
+    file: lib/RDF/aREF.pm
+    version: 0.11
+  RDF::aREF::Decoder:
+    file: lib/RDF/aREF/Decoder.pm
+    version: 0.11
+requires:
+  RDF::NS: 20130816
+  perl: v5.12.0
+resources:
+  bugtracker: https://github.com/nichtich/RDF-aREF/issues
+  homepage: https://github.com/nichtich/RDF-aREF
+  repository: https://github.com/nichtich/RDF-aREF.git
+version: 0.11

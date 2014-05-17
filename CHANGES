@@ -1,0 +1,46 @@
+Changelog for RDF-aREF
+
+0.11 2014-04-09T12:56:37
+ - don't die on malformed IRIs [Jakob Voss]
+
+0.10 2014-01-22T11:11:50
+ - fixed bnode collision bug [Jakob Voss]
+ - new option: bnode_prefix [Jakob Voss]
+ - show how to serialize with RDF::Trine [Jakob Voss]
+ - more test cases [Jakob Voss]
+
+0.09 2014-01-21T13:11:32
+ - better error message when expecting an URI (close #3) [Jakob Voss]
+ - Avoid numeric blank node identifiers.
+   
+   Although it's legal, some parsers don't like them. [Jakob Voss]
+ - Show how to decode into RDF::Trine::Model [Jakob Voss]
+
+0.08 2014-01-15T11:08:31
+ - facilitate use of this module together with RDF::Trine [Jakob Voss]
+
+0.07 2013-12-18T08:21:41
+ - increased error detection [Jakob Voss]
+ - fixed test_requires [Jakob Voss]
+
+0.06 2013-12-14T20:15:38
+ - extended test suite [Jakob Voss]
+ - test-cases with errors [Jakob Voss]
+
+0.05 2013-12-04T20:01:53
+ - improved handling of undefined/null [Jakob Voss]
+ - use warnings; list provides [Jakob Voss]
+
+0.04 2013-12-03T08:51:00
+ - improved error handling, fixed bug in subject-maps [Jakob Voss]
+
+0.03 2013-12-02T13:47:26
+ - release [Jakob Voss]
+ - avoid lexical $_ [Jakob Voss]
+ - added error test [Jakob Voss]
+ - run coverage test with RDF::Trine [Jakob Voss]
+ - fixed links [Jakob Voss]
+ - improved unit tests [Jakob Voss]
+ - rewrote aREF decoder [Jakob Voss]
+ - split RDF::aREF from Catmandu-RDF [Jakob Voss]
+

@@ -2,7 +2,7 @@ use strict;
 use warnings;
 package RDF::aREF;
 #ABSTRACT: Another RDF Encoding Form
-#VERSION
+our $VERSION = '0.11'; #VERSION
 
 use RDF::aREF::Decoder;
 
@@ -21,6 +21,20 @@ sub aref_to_trine_statement {
 }
 
 1;
+
+__END__
+
+=pod
+
+=encoding UTF-8
+
+=head1 NAME
+
+RDF::aREF - Another RDF Encoding Form
+
+=head1 VERSION
+
+version 0.11
 
 =head1 SYNOPSIS
 
@@ -73,7 +87,7 @@ See L<RDF::aREF::Decoder> for possible options.
 
 =over
 
-=item 
+=item
 
 This module was first packaged together with L<Catmandu::RDF>.
 
@@ -91,6 +105,15 @@ See L<RDF::YAML> for a similar (outdated) RDF encoding in YAML.
 
 =back
 
-=encoding utf8
+=head1 AUTHOR
+
+Jakob Voß
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2014 by Jakob Voß.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
 
 =cut

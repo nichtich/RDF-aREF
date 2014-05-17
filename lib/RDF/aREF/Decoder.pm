@@ -2,7 +2,7 @@ use strict;
 use warnings;
 package RDF::aREF::Decoder;
 #ABSTRACT: Decode another RDF Encoding Form (to RDF triples)
-#VERSION
+our $VERSION = '0.11'; #VERSION
 use RDF::NS;
 use v5.12;
 use feature 'unicode_strings';
@@ -286,6 +286,20 @@ sub aref_to_trine_statement {
 
 1;
 
+__END__
+
+=pod
+
+=encoding UTF-8
+
+=head1 NAME
+
+RDF::aREF::Decoder - Decode another RDF Encoding Form (to RDF triples)
+
+=head1 VERSION
+
+version 0.11
+
 =head1 SYNOPSIS
 
     use RDF::aREF::Decoder;
@@ -368,5 +382,16 @@ An integer to start creating blank node identifiers with. The default value "0"
 results in blank node identifiers starting from "b1". This option can be useful
 to avoid collision of blank node identifiers when merging multiple aREF
 instances. The current counter value is accessible as accessor.
+
+=head1 AUTHOR
+
+Jakob Voß
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2014 by Jakob Voß.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
 
 =cut
