@@ -1,0 +1,6 @@
+librdf-aref-perl (0.11-1) unstable; urgency=low
+
+  * Initial Release.
+    Closes: bug#748522.
+
+ -- Jonas Smedegaard <dr@jones.dk>  Sun, 18 May 2014 03:28:42 +0200

@@ -1,0 +1,27 @@
+Source: librdf-aref-perl
+Section: perl
+Priority: optional
+Build-Depends: cdbs,
+ devscripts,
+ debhelper,
+ dh-buildinfo,
+ perl (>= 5.12.0),
+ librdf-ns-perl (>= 20130816),
+ librdf-trine-perl,
+ libjson-perl
+Maintainer: Debian Perl Group <pkg-perl-maintainers@lists.alioth.debian.org>
+Uploaders: Jonas Smedegaard <dr@jones.dk>
+Standards-Version: 3.9.5
+Vcs-Git: git://anonscm.debian.org/pkg-perl/packages/librdf-aref-perl
+Vcs-Browser: http://anonscm.debian.org/gitweb/?p=pkg-perl/packages/librdf-aref-perl.git
+Homepage: https://github.com/nichtich/RDF-aREF
+
+Package: librdf-aref-perl
+Architecture: all
+Depends: ${perl:Depends}, ${misc:Depends}, ${cdbs:Depends}
+Recommends: ${cdbs:Recommends}
+Description: another RDF Encoding Form
+ aREF (another RDF Encoding Form) is an encoding of RDF graphs in form
+ of arrays, hashes, and Unicode strings.
+ .
+ RDF::aREF implements decoding from aREF data to RDF triples.
