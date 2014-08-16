@@ -13,7 +13,7 @@ Maintainer: Debian Perl Group <pkg-perl-maintainers@lists.alioth.debian.org>
 Uploaders: Jonas Smedegaard <dr@jones.dk>
 Standards-Version: 3.9.5
 Vcs-Git: git://anonscm.debian.org/pkg-perl/packages/librdf-aref-perl
-Vcs-Browser: http://anonscm.debian.org/gitweb/?p=pkg-perl/packages/librdf-aref-perl.git
+Vcs-Browser: https://anonscm.debian.org/cgit/pkg-perl/packages/librdf-aref-perl.git
 Homepage: https://github.com/nichtich/RDF-aREF
 
 Package: librdf-aref-perl
