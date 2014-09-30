@@ -1,14 +1,16 @@
 package RDF::aREF;
 use strict;
 use warnings;
+use v5.12;
 
-our $VERSION = '0.11';
+our $VERSION = '0.111';
 
 use RDF::aREF::Decoder;
 
 use parent 'Exporter';
 our @EXPORT = qw(decode_aref);
-our @EXPORT_OK = qw(aref_to_trine_statement decode_aref);
+our @EXPORT_OK = qw(aref_to_trine_statement decode_aref plain_literal);
+our %EXPORT_TAGS = (all => [@EXPORT_OK]);
 
 sub decode_aref(@) { ## no critic
     my ($aref, %options) = @_;
@@ -20,8 +22,16 @@ sub aref_to_trine_statement {
     RDF::aREF::Decoder::aref_to_trine_statement(@_);
 }
 
-1;
+sub plain_literal {
+    state $decoder = RDF::aREF::Decoder->new;
+    if (ref $_[0]) {
+        return grep { defined } map { $decoder->plain_literal($_) } @{$_[0]};
+    } else {
+        $decoder->plain_literal(@_);
+    }
+}
 
+1;
 __END__
 
 =encoding utf8
@@ -79,13 +89,20 @@ implements decoding from aREF data to RDF triples.
 
 =head1 EXPORTED FUNCTIONS
 
-=head2 decode_aref ( $aref, [ %options ] )
+=head2 decode_aref( $aref, [ %options ] )
 
 Decodes an aREF document given as hash referece. This function is a shortcut for
 
     RDF::aREF::Decoder->new(%options)->decode($aref)
 
 See L<RDF::aREF::Decoder> for possible options.
+
+=head1 EXPORTABLE FUNCTIONS
+
+=head2 plain_literal( @strings | \@strings )
+
+Converts a list of aREF objects to plain strings by removing language tags or
+datatypes.
 
 =head1 SEE ALSO
 

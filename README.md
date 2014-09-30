@@ -47,13 +47,20 @@ implements decoding from aREF data to RDF triples.
 
 # EXPORTED FUNCTIONS
 
-## decode\_aref ( $aref, \[ %options \] )
+## decode\_aref( $aref, \[ %options \] )
 
 Decodes an aREF document given as hash referece. This function is a shortcut for
 
     RDF::aREF::Decoder->new(%options)->decode($aref)
 
 See [RDF::aREF::Decoder](https://metacpan.org/pod/RDF::aREF::Decoder) for possible options.
+
+# EXPORTABLE FUNCTIONS
+
+## plain\_literal( @strings | \\@strings )
+
+Converts a list of aREF objects to plain strings by removing language tags or
+datatypes.
 
 # SEE ALSO
 

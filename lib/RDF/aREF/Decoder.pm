@@ -156,45 +156,57 @@ sub predicate_map {
                 unless( $self->{visited}{refaddr $_} ) {
                     $self->predicate_map( $object, $_ );
                 }
+            } elsif (!defined $_) {
+                $self->error('object must not be null') if $self->{strict};
+                next;
             } elsif (!ref $_) {
-                my @object;
-
-                if ( $_ =~ explicitIRI ) {
-                    push @object, $self->iri($1) // next;
-                } elsif ( $_ =~ blankNode ) {
-                    push @object, $self->blank_identifier($1);
-                } elsif ( /^($Prefix)?:($Name)$/o ) {
-                    push @object, $self->prefixed_name($1,$2) // next;
-                } elsif ( /^(.*)@([a-z]{2,8}(-[a-z0-9]{1,8})*)?$/i ) {
-                    @object = ($1, defined $2 ? lc($2) : undef);
-                } elsif ( /^(.*?)[\^][\^]?($Prefix)?:($Name)$/o ) {
-                    my $datatype = $self->prefixed_name($2,$3) // next;
-                    if ($datatype eq 'http://www.w3.org/2001/XMLSchema#string') {
-                        @object = ($1,undef);
-                    } else {
-                        @object = ($1,undef,$datatype);
-                    }
-                } elsif ( /^(.*?)[\^][\^]?<([a-z][a-z0-9+.-]*:.*)>$/ ) {
-                    my $datatype = $self->iri($2) // next;
-                    if ($datatype eq 'http://www.w3.org/2001/XMLSchema#string') {
-                        @object = ($1,undef);
-                    } else {
-                        @object = ($1,undef,$datatype);
-                    }
-                } elsif ( $_ =~ IRIlike ) {
-                    @object = $self->iri($_) // next;
-                } elsif (!defined $_) {
-                    $self->error('object must not be null') if $self->{strict};
-                    next;
-                } else {
-                    @object = ($_,undef);
+                if (my $object = $self->decode_object($_)) {
+                    $self->triple( $subject, $predicate, @$object );
                 }
-                $self->triple( $subject, $predicate, @object );
             } else {
                 $self->error('object must not be reference to '.ref $_);
             }
         }
     }
+}
+
+sub decode_object {
+    my ($self, $o) = @_;
+
+    if ( $o =~ explicitIRI ) {
+        return [$self->iri($1)];
+    } elsif ( $o =~ blankNode ) {
+        return [$self->blank_identifier($1)];
+    } elsif ( $o =~ /^($Prefix)?:($Name)$/o ) {
+        return [$self->prefixed_name($1,$2)];
+    } elsif ( $o =~ /^(.*)@([a-z]{2,8}(-[a-z0-9]{1,8})*)?$/i ) {
+        return [$1, defined $2 ? lc($2) : undef];
+    } elsif ( $o =~ /^(.*?)[\^][\^]?($Prefix)?:($Name)$/o ) {
+        my $datatype = $self->prefixed_name($2,$3) // return;
+        if ($datatype eq 'http://www.w3.org/2001/XMLSchema#string') {
+            return [$1,undef];
+        } else {
+            return [$1,undef,$datatype];
+        }
+    } elsif ( $o =~ /^(.*?)[\^][\^]?<([a-z][a-z0-9+.-]*:.*)>$/ ) {
+        my $datatype = $self->iri($2) // return;
+        if ($datatype eq 'http://www.w3.org/2001/XMLSchema#string') {
+            return [$1,undef];
+        } else {
+            return [$1,undef,$datatype];
+        }
+    } elsif ( $o =~ IRIlike ) {
+        return [$self->iri($o)];
+    } else {
+        return [$o, undef];
+    }
+}
+
+sub plain_literal {
+    my ($self, $object) = @_;
+    my $obj = $self->decode_object($object);
+    return if @$obj == 1; # resource or blank
+    return $obj->[0];
 }
 
 sub iri {
