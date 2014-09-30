@@ -1,8 +1,8 @@
+package RDF::aREF;
 use strict;
 use warnings;
-package RDF::aREF;
-#ABSTRACT: Another RDF Encoding Form
-#VERSION
+
+our $VERSION = '0.11';
 
 use RDF::aREF::Decoder;
 
@@ -21,6 +21,24 @@ sub aref_to_trine_statement {
 }
 
 1;
+
+__END__
+
+=encoding utf8
+
+=head1 NAME
+
+RDF::aREF - Another RDF Encoding Form
+
+=begin markdown
+
+# STATUS
+
+[![Build Status](https://travis-ci.org/nichtich/RDF-aREF.png)](https://travis-ci.org/nichtich/RDF-aREF)
+[![Coverage Status](https://coveralls.io/repos/nichtich/RDF-aREF/badge.png)](https://coveralls.io/r/nichtich/RDF-aREF)
+[![Kwalitee Score](http://cpants.cpanauthors.org/dist/RDF-aREF.png)](http://cpants.cpanauthors.org/dist/RDF-aREF)
+
+=end markdown
 
 =head1 SYNOPSIS
 
@@ -91,6 +109,9 @@ See L<RDF::YAML> for a similar (outdated) RDF encoding in YAML.
 
 =back
 
-=encoding utf8
+=head1 LICENSE
+
+This is free software; you can redistribute it and/or modify it under the same
+terms as the Perl 5 programming language system itself.
 
 =cut

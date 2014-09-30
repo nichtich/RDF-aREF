@@ -1,10 +1,11 @@
+package RDF::aREF::Decoder;
 use strict;
 use warnings;
-package RDF::aREF::Decoder;
-#ABSTRACT: Decode another RDF Encoding Form (to RDF triples)
-#VERSION
+
+our $VERSION = '0.11';
+
 use RDF::NS;
-use v5.12;
+use v5.10;
 use feature 'unicode_strings';
 use Scalar::Util qw(refaddr blessed);
 
@@ -285,6 +286,11 @@ sub aref_to_trine_statement {
 
 
 1;
+__END__
+
+=head1 NAME
+
+RDF::aREF::Decoder - decode another RDF Encoding Form (to RDF triples)
 
 =head1 SYNOPSIS
 
