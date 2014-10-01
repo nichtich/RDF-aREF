@@ -11,7 +11,7 @@ my %tests = (
 );
 
 while (my ($aref, $literal) = each %tests) {
-    my $got = plain_literal($aref);
+    my $got = aref_get_literal($aref);
     is $got, $literal, $aref;
 }
 

@@ -3,13 +3,13 @@ use strict;
 use warnings;
 use v5.12;
 
-our $VERSION = '0.111';
+our $VERSION = '0.12';
 
 use RDF::aREF::Decoder;
 
 use parent 'Exporter';
 our @EXPORT = qw(decode_aref);
-our @EXPORT_OK = qw(aref_to_trine_statement decode_aref plain_literal);
+our @EXPORT_OK = qw(aref_to_trine_statement decode_aref aref_get_literal aref_get_resource);
 our %EXPORT_TAGS = (all => [@EXPORT_OK]);
 
 sub decode_aref(@) { ## no critic
@@ -22,12 +22,21 @@ sub aref_to_trine_statement {
     RDF::aREF::Decoder::aref_to_trine_statement(@_);
 }
 
-sub plain_literal {
+sub aref_get_literal {
     state $decoder = RDF::aREF::Decoder->new;
     if (ref $_[0]) {
         return grep { defined } map { $decoder->plain_literal($_) } @{$_[0]};
     } else {
         $decoder->plain_literal(@_);
+    }
+}
+
+sub aref_get_resource {
+    state $decoder = RDF::aREF::Decoder->new;
+    if (ref $_[0]) {
+        return grep { defined } map { $decoder->resource($_) } @{$_[0]};
+    } else {
+        $decoder->resource(@_);
     }
 }
 
@@ -95,12 +104,20 @@ Decodes an aREF document given as hash referece. This function is a shortcut for
 
 See L<RDF::aREF::Decoder> for possible options.
 
-=head1 EXPORTABLE FUNCTIONS
+=head1 EXPORTABLE FUNCTIONS (experimental)
 
-=head2 plain_literal( @strings | \@strings )
+=head2 aref_iri( [ $decoder ], $uri )
+
+Encode an URI in aREF.
+
+=head2 aref_get_literal( $string | \@strings )
 
 Converts a list of aREF objects to plain strings by removing language tags or
 datatypes.
+
+=head2 aref_get_resource( $string | \@strings ] )
+
+Decodes one or more resources (URI references or blank nodes)
 
 =head1 SEE ALSO
 

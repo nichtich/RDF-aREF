@@ -1,11 +1,11 @@
 package RDF::aREF::Decoder;
 use strict;
 use warnings;
+use v5.10;
 
-our $VERSION = '0.11';
+our $VERSION = '0.12';
 
 use RDF::NS;
-use v5.10;
 use feature 'unicode_strings';
 use Scalar::Util qw(refaddr blessed);
 
@@ -405,5 +405,9 @@ An integer to start creating blank node identifiers with. The default value "0"
 results in blank node identifiers starting from "b1". This option can be useful
 to avoid collision of blank node identifiers when merging multiple aREF
 instances. The current counter value is accessible as accessor.
+
+=head1 SEE ALSO
+
+L<RDF::aREF::Encoder>
 
 =cut

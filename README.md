@@ -55,12 +55,20 @@ Decodes an aREF document given as hash referece. This function is a shortcut for
 
 See [RDF::aREF::Decoder](https://metacpan.org/pod/RDF::aREF::Decoder) for possible options.
 
-# EXPORTABLE FUNCTIONS
+# EXPORTABLE FUNCTIONS (experimental)
 
-## plain\_literal( @strings | \\@strings )
+## aref\_iri( \[ $decoder \], $uri )
+
+Encode an URI in aREF.
+
+## aref\_get\_literal( $string | \\@strings )
 
 Converts a list of aREF objects to plain strings by removing language tags or
 datatypes.
+
+## aref\_get\_resource( $string | \\@strings \] )
+
+Decodes one or more resources (URI references or blank nodes)
 
 # SEE ALSO
 
