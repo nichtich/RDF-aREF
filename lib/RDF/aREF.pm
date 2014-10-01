@@ -34,8 +34,6 @@ sub plain_literal {
 1;
 __END__
 
-=encoding utf8
-
 =head1 NAME
 
 RDF::aREF - Another RDF Encoding Form
@@ -126,9 +124,11 @@ See L<RDF::YAML> for a similar (outdated) RDF encoding in YAML.
 
 =back
 
-=head1 LICENSE
+=head1 COPYRIGHT AND LICENSE
 
-This is free software; you can redistribute it and/or modify it under the same
-terms as the Perl 5 programming language system itself.
+Copyright Jakob Voss, 2014-
+
+This library is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
 
 =cut

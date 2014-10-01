@@ -69,7 +69,9 @@ datatypes.
 - [RDF::Trine](https://metacpan.org/pod/RDF::Trine) contains much more for handling RDF data in Perl.
 - See [RDF::YAML](https://metacpan.org/pod/RDF::YAML) for a similar (outdated) RDF encoding in YAML.
 
-# LICENSE
+# COPYRIGHT AND LICENSE
 
-This is free software; you can redistribute it and/or modify it under the same
-terms as the Perl 5 programming language system itself.
+Copyright Jakob Voss, 2014-
+
+This library is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
