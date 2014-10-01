@@ -45,6 +45,8 @@ aREF ([another RDF Encoding Form](http://gbv.github.io/aREF/)) is an encoding
 of RDF graphs in form of arrays, hashes, and Unicode strings. This module 
 implements decoding from aREF data to RDF triples.
 
+See [RDF::aREF::Decoder](https://metacpan.org/pod/RDF::aREF::Decoder) and [RDF::aREF::Encoder](https://metacpan.org/pod/RDF::aREF::Encoder) for usage of this module.
+
 # EXPORTED FUNCTIONS
 
 ## decode\_aref( $aref, \[ %options \] )
@@ -55,7 +57,7 @@ Decodes an aREF document given as hash referece. This function is a shortcut for
 
 See [RDF::aREF::Decoder](https://metacpan.org/pod/RDF::aREF::Decoder) for possible options.
 
-# EXPORTABLE FUNCTIONS (experimental)
+# EXPORTABLE FUNCTIONS (experimental!)
 
 ## aref\_iri( \[ $decoder \], $uri )
 
