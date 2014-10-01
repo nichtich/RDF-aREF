@@ -125,7 +125,7 @@ sub predicate_map {
                 "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
             } elsif ( /^<(.+)>$/ ) {
                 $self->iri($1);
-            } elsif ( /^(($Prefix)?[:_])?($Name)$/o ) {
+            } elsif ( /^(($Prefix)?_)?($Name)$/o ) {
                 $self->prefixed_name($2,$3);
             } elsif ( $_ =~ IRIlike ) {
                 $self->iri($_);
