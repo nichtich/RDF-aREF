@@ -92,18 +92,18 @@ sub decode {
 
     if (exists $map->{_id}) {
         my $id = $map->{_id};
-        my $subject = ($id // '') ne '' ? $self->resource($id,\'subject') : undef;
+        my $subject = ($id // '') ne '' ? $self->expect_resource($id,\'subject') : undef;
         if (defined $subject and $subject ne '') {
             $self->predicate_map( $subject, $map );
         } elsif ($self->{strict}) { 
-            $self->error("invalid subject $id");
+            $self->error("invalid subject: $id");
         }
     } else {
         for my $key (grep { $_ ne '_ns' } keys %$map) {
             next if $key eq '' and !$self->{strict};
-            my $subject = $self->resource($key,\'subject') // next;
+            my $subject = $self->expect_resource($key,\'subject') // next;
             my $predicates = $map->{$key};
-            if (exists $predicates->{_id} and $self->resource($predicates->{_id}) ne $subject) {
+            if (exists $predicates->{_id} and ($self->resource($predicates->{_id}) // '') ne $subject) {
                 $self->error("subject _id must be <$subject>");
             } else {
                 $self->predicate_map( $subject, $predicates );
@@ -148,20 +148,19 @@ sub predicate_map {
 
             if (ref $_ eq 'HASH') {
                 my $object = exists $_->{_id}
-                    ? ($self->resource($_->{_id},\'object _id') // next)
+                    ? ($self->expect_resource($_->{_id},\'object _id') // next)
                     : $self->blank_identifier();
 
-                $self->triple( $subject, $predicate, $object );
+                $self->triple( $subject, $predicate, [$object] );
 
                 unless( $self->{visited}{refaddr $_} ) {
                     $self->predicate_map( $object, $_ );
                 }
-            } elsif (!defined $_) {
-                $self->error('object must not be null') if $self->{strict};
-                next;
             } elsif (!ref $_) {
-                if (my $object = $self->decode_object($_)) {
-                    $self->triple( $subject, $predicate, @$object );
+                if (my $object = $self->object($_)) {
+                    $self->triple( $subject, $predicate, $object );
+                } elsif (!defined $_ and $self->{strict}) {
+                    $self->error('object must not be null');
                 }
             } else {
                 $self->error('object must not be reference to '.ref $_);
@@ -170,41 +169,71 @@ sub predicate_map {
     }
 }
 
-sub decode_object {
+sub expect_resource {
+    my ($self, $r, $expect) = @_;
+    if (my $resource = $self->resource($r)) {
+        return $resource;
+    } else {
+        $self->error("invalid ".$$expect.": $r");
+        return;
+    }
+}
+
+sub resource {
+    my ($self, $r) = @_;
+    
+    if (!defined $r) {
+        undef;
+    } elsif ( $r =~ explicitIRI ) {
+        $self->iri($1);
+    } elsif ( $r =~ blankNode ) {
+        $self->blank_identifier($1);
+    } elsif ( $r =~ /^(($Prefix)?[:_])?($Name)$/o ) {
+        $self->prefixed_name($2,$3);
+    } elsif ( $r =~ IRIlike )  {
+        $self->iri($r);
+    } else {
+        undef;
+    }
+}
+
+sub object {
     my ($self, $o) = @_;
 
-    if ( $o =~ explicitIRI ) {
-        return [$self->iri($1)];
+    if (!defined $o) {
+        undef;
+    } elsif ( $o =~ explicitIRI ) {
+        [$self->iri($1)];
     } elsif ( $o =~ blankNode ) {
-        return [$self->blank_identifier($1)];
+        [$self->blank_identifier($1)];
     } elsif ( $o =~ /^($Prefix)?:($Name)$/o ) {
-        return [$self->prefixed_name($1,$2)];
+        [$self->prefixed_name($1,$2)];
     } elsif ( $o =~ /^(.*)@([a-z]{2,8}(-[a-z0-9]{1,8})*)?$/i ) {
-        return [$1, defined $2 ? lc($2) : undef];
+        [$1, defined $2 ? lc($2) : undef];
     } elsif ( $o =~ /^(.*?)[\^][\^]?($Prefix)?:($Name)$/o ) {
         my $datatype = $self->prefixed_name($2,$3) // return;
         if ($datatype eq 'http://www.w3.org/2001/XMLSchema#string') {
-            return [$1,undef];
+            [$1,undef];
         } else {
-            return [$1,undef,$datatype];
+            [$1,undef,$datatype];
         }
     } elsif ( $o =~ /^(.*?)[\^][\^]?<([a-z][a-z0-9+.-]*:.*)>$/ ) {
         my $datatype = $self->iri($2) // return;
         if ($datatype eq 'http://www.w3.org/2001/XMLSchema#string') {
-            return [$1,undef];
+            [$1,undef];
         } else {
-            return [$1,undef,$datatype];
+            [$1,undef,$datatype];
         }
     } elsif ( $o =~ IRIlike ) {
-        return [$self->iri($o)];
+        [$self->iri($o)];
     } else {
-        return [$o, undef];
+        [$o, undef];
     }
 }
 
 sub plain_literal {
     my ($self, $object) = @_;
-    my $obj = $self->decode_object($object);
+    my $obj = $self->object($object);
     return if @$obj == 1; # resource or blank
     return $obj->[0];
 }
@@ -219,23 +248,6 @@ sub iri {
     }
 }
 
-# Returns an IRI (as string), a blank node (as string reference), or undef.
-sub resource { 
-    my ($self, $r, $expect) = @_;
-    if ( $r =~ explicitIRI ) {
-        $self->iri($1);
-    } elsif ( $r =~ blankNode ) {
-        $self->blank_identifier($1);
-    } elsif ( $r =~ /^(($Prefix)?[:_])?($Name)$/o ) {
-        $self->prefixed_name($2,$3);
-    } elsif ( $r =~ IRIlike )  {
-        $self->iri($r);
-    } else {
-        $self->error("invalid ".$$expect." $r") if $expect;
-        undef;
-    }
-}
-
 sub prefixed_name {
     my ($self, $prefix, $name) = @_;
     my $base = $self->{ns}{$prefix // ''}
@@ -247,7 +259,11 @@ sub prefixed_name {
 
 sub triple {
     my $self = shift;
-    $self->{callback}->(@_);
+    my $subject   = ref $_[0] ? '_:'.${$_[0]} : $_[0];
+    my $predicate = $_[1];
+    my @object    = @{$_[2]};
+    $object[0] = '_:'.${$object[0]} if ref $object[0];
+    $self->{callback}->($subject, $predicate, @object);
 }
 
 sub error {
@@ -279,16 +295,18 @@ sub blank_identifier {
 sub aref_to_trine_statement {
     RDF::Trine::Statement->new(
         # subject
-        ref $_[0] ? RDF::Trine::Node::Blank->new(${$_[0]})
-            : RDF::Trine::Node::Resource->new($_[0]),
+        (substr($_[0],0,2) eq '_:' ? RDF::Trine::Node::Blank->new(substr $_[0], 2)
+                                   : RDF::Trine::Node::Resource->new($_[0])),
         # predicate
         RDF::Trine::Node::Resource->new($_[1]),
         # object
         do {
-            if (ref $_[2]) {
-                RDF::Trine::Node::Blank->new(${$_[2]});
-            } elsif (@_ == 3) {
-                RDF::Trine::Node::Resource->new($_[2]);
+            if (@_ == 3) {
+                if (substr($_[2],0,2) eq '_:') {
+                    RDF::Trine::Node::Blank->new(substr $_[2], 2);
+                } else {
+                    RDF::Trine::Node::Resource->new($_[2]);
+                }
             } else {
                 RDF::Trine::Node::Literal->new($_[2],$_[3],$_[4]);
             } 
@@ -332,7 +350,8 @@ elements:
 
 =item subject
 
-The subject IRI as string or subject blank node as string reference.
+The subject IRI or subject blank node as string. Blank nodes always start with
+C<_>.
 
 =item predicate
 
@@ -340,8 +359,8 @@ The predicate IRI.
 
 =item object
 
-The object IRI as string or object blank node as string reference or
-literal object as string.
+The object IRI or object blank node or literal object as string. Blank nodes
+always start with C<_>.
 
 =item language
 

@@ -6,7 +6,7 @@ use RDF::aREF qw(decode_aref);
 my @errors = (
 # invalid subjects
     { [] => { a => 'foaf:Person' } }
-        => qr/^invalid subject ARRAY\(/,
+        => qr/^invalid subject: ARRAY\(/,
 # invalid predicates        
     { '<x:subject>' => { \"" => "" } }
         => qr/^invalid predicate IRI SCALAR\(/,

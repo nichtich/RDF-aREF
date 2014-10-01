@@ -38,7 +38,6 @@ test_decode $_, "$alice ${_rdf}type ${_foaf}Person" for
     { _id => $alice, _ns => $_foaf, a => ":Person" },
     { _id => $alice, _ns => $_rdf, type => "foaf:Person" },
     { _id => $alice, _ns => $_rdf, _type => "foaf:Person" },
-    { _id => $alice, _ns => $_rdf, ':type' => "foaf:Person" },
   # subject map
     { $alice => { a => "foaf:Person" } },
     { $alice => { a => "${_foaf}Person" } },
@@ -49,7 +48,6 @@ test_decode $_, "$alice ${_rdf}type ${_foaf}Person" for
     { _ns => $_foaf, $alice => { a => ":Person" } },
     { _ns => $_rdf, $alice => { type => "foaf:Person" } },
     { _ns => $_rdf, $alice => { _type => "foaf:Person" } },
-    { _ns => $_rdf, $alice => { ':type' => "foaf:Person" } },
     { _ns => { _ => $_foaf, x => $_ex }, x_alice => { a => ":Person" } },
     { _ns => { f => $_foaf, '' => $_ex }, alice => { a => "foaf:Person" } },
     { _ns => $_ex, alice => { a => "foaf:Person" } },
@@ -82,17 +80,17 @@ test_decode { $alice => { foaf_name => "Alice\@$_" } },
     "$alice ${_foaf}name Alice ".lc($_) for qw(en en-US abcdefgh-x-12345678);
 
 # blank nodes
-test_decode $_, "$alice ${_foaf}knows ?b1" for
+test_decode $_, "$alice ${_foaf}knows _:b1" for
     { $alice => { foaf_knows => { } } },
     { $alice => { foaf_knows => { _id => '_:b1' } } },
 ;
 
-test_decode [ $_, bnode_prefix => 'x' ], "$alice ${_foaf}knows ?x1" for
+test_decode [ $_, bnode_prefix => 'x' ], "$alice ${_foaf}knows _:x1" for
     { $alice => { foaf_knows => { } } },
     { $alice => { foaf_knows => { _id => '_:b1' } } },
 ;
 
-test_decode $_, "?b1 ${_rdf}type ${_foaf}Person\n$alice ${_foaf}knows ?b1" for
+test_decode $_, "_:b1 ${_rdf}type ${_foaf}Person\n$alice ${_foaf}knows _:b1" for
     { $alice => { foaf_knows => { a => 'foaf:Person' } } },
     { $alice => { foaf_knows => { _id => '_:b1', a => 'foaf:Person' } } },
     { $alice => { foaf_knows => '_:b1' }, '_:b1' => { a => 'foaf:Person' } },
