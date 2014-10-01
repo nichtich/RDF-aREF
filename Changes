@@ -1,6 +1,7 @@
 # Changelog for RDF-aREF
 
 {{$NEXT}}
+  - improvedEEncoder
 
 0.12  2014-10-01 14:45:09 CEST
   - migrated to Dist::Zilla

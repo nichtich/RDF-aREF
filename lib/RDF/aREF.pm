@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use v5.12;
 
-our $VERSION = '0.12';
+our $VERSION = '0.13';
 
 use RDF::aREF::Decoder;
 
@@ -94,6 +94,8 @@ aREF (L<another RDF Encoding Form|http://gbv.github.io/aREF/>) is an encoding
 of RDF graphs in form of arrays, hashes, and Unicode strings. This module 
 implements decoding from aREF data to RDF triples.
 
+See L<RDF::aREF::Decoder> and L<RDF::aREF::Encoder> for usage of this module.
+
 =head1 EXPORTED FUNCTIONS
 
 =head2 decode_aref( $aref, [ %options ] )
@@ -104,7 +106,7 @@ Decodes an aREF document given as hash referece. This function is a shortcut for
 
 See L<RDF::aREF::Decoder> for possible options.
 
-=head1 EXPORTABLE FUNCTIONS (experimental)
+=head1 EXPORTABLE FUNCTIONS (experimental!)
 
 =head2 aref_iri( [ $decoder ], $uri )
 
