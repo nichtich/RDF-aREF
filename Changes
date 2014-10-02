@@ -1,6 +1,8 @@
 # Changelog for RDF-aREF
 
 {{$NEXT}}
+
+0.14  2014-10-02 14:14:09 CEST
   - adjust with aREF 0.19
   - added aref_query (experimental)
 
