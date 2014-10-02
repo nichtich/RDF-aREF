@@ -3,22 +3,35 @@ use strict;
 use warnings;
 use v5.10;
 
-our $VERSION = '0.12';
+our $VERSION = '0.14';
 
-use RDF::NS;
 use feature 'unicode_strings';
-use Scalar::Util qw(refaddr blessed);
-
 no warnings 'uninitialized';
 
-our $nameChar = 'A-Z_a-z\N{U+00C0}-\N{U+00D6}\N{U+00D8}-\N{U+00F6}\N{U+00F8}-\N{U+02FF}\N{U+0370}-\N{U+037D}\N{U+037F}-\N{U+1FFF}\N{U+200C}-\N{U+200D}\N{U+2070}-\N{U+218F}\N{U+2C00}-\N{U+2FEF}\N{U+3001}-\N{U+D7FF}\N{U+F900}-\N{U+FDCF}\N{U+FDF0}-\N{U+FFFD}\N{U+10000}-\N{U+EFFFF}';
-our $nameStartChar = $nameChar.'0-9\N{U+00B7}\N{U+0300}\N{U+036F}\N{U+203F}-\N{U+2040}-';
-our $Prefix = '[a-z][a-z0-9]*';
-our $Name   = "[$nameStartChar][$nameChar]*";
+use RDF::NS;
+use Scalar::Util qw(refaddr blessed);
 
-use constant explicitIRI => qr/^<(.+)>$/;
-use constant IRIlike     => qr/^[a-z][a-z0-9+.-]*:/;
-use constant blankNode   => qr/^_:([a-zA-Z0-9]+)$/;
+use parent 'Exporter'; 
+our @EXPORT_OK = qw(prefix qName blankNode IRIlike languageString languageTag datatypeString);
+
+our ($PREFIX, $NAME);
+BEGIN {
+    my $nameChar = 'A-Z_a-z\N{U+00C0}-\N{U+00D6}\N{U+00D8}-\N{U+00F6}\N{U+00F8}-\N{U+02FF}\N{U+0370}-\N{U+037D}\N{U+037F}-\N{U+1FFF}\N{U+200C}-\N{U+200D}\N{U+2070}-\N{U+218F}\N{U+2C00}-\N{U+2FEF}\N{U+3001}-\N{U+D7FF}\N{U+F900}-\N{U+FDCF}\N{U+FDF0}-\N{U+FFFD}\N{U+10000}-\N{U+EFFFF}';
+    my $nameStartChar = $nameChar.'0-9\N{U+00B7}\N{U+0300}\N{U+036F}\N{U+203F}-\N{U+2040}-';
+    our $PREFIX = '[a-z][a-z0-9]*';
+    our $NAME   = "[$nameStartChar][$nameChar]*";
+}
+
+use constant prefix         => qr/^$PREFIX$/;
+use constant qName          => qr/^($PREFIX)_($NAME)$/;
+use constant blankNode      => qr/^_:([a-zA-Z0-9]+)$/;
+use constant IRIlike        => qr/^[a-z][a-z0-9+.-]*:/;
+use constant languageString => qr/^(.*)@([a-z]{2,8}(-[a-z0-9]{1,8})*)$/i;
+use constant languageTag    => qr/^[a-z]{2,8}(-[a-z0-9]{1,8})*$/i;
+use constant datatypeString => qr/^(.*?)[\^]
+                                  ((($PREFIX)?_($NAME))|<([a-z][a-z0-9+.-]*:.*)>)$/x;
+
+use constant explicitIRIlike => qr/^<(.+)>$/;
 
 sub new {
     my ($class, %options) = @_;
@@ -63,7 +76,7 @@ sub namespace_map { # sets the local namespace map
         if (ref $map eq 'HASH') {
             while (my ($prefix,$namespace) = each %$map) {
                 $prefix = '' if $prefix eq '_';
-                if ($prefix !~ /^([a-z][a-z0-9+.-]*)?$/) {
+                if ($prefix !~ prefix) {
                     $self->error("invalid prefix: $prefix");
                 } elsif ($namespace !~ IRIlike) {
                     $self->error("invalid namespace: $namespace");
@@ -123,10 +136,10 @@ sub predicate_map {
         my $predicate = do {
             if ($_ eq 'a') {
                 "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
-            } elsif ( /^<(.+)>$/ ) {
+            } elsif ( $_ =~ /^<(.+)>$/ ) {
                 $self->iri($1);
-            } elsif ( /^(($Prefix)?_)?($Name)$/o ) {
-                $self->prefixed_name($2,$3);
+            } elsif ( $_ =~ qName ) { 
+                $self->prefixed_name($1,$2);
             } elsif ( $_ =~ IRIlike ) {
                 $self->iri($_);
             } else {
@@ -184,12 +197,12 @@ sub resource {
     
     if (!defined $r) {
         undef;
-    } elsif ( $r =~ explicitIRI ) {
+    } elsif ( $r =~ explicitIRIlike ) {
         $self->iri($1);
     } elsif ( $r =~ blankNode ) {
         $self->blank_identifier($1);
-    } elsif ( $r =~ /^(($Prefix)?[:_])?($Name)$/o ) {
-        $self->prefixed_name($2,$3);
+    } elsif ( $r =~ qName ) {
+        $self->prefixed_name($1,$2);
     } elsif ( $r =~ IRIlike )  {
         $self->iri($r);
     } else {
@@ -202,27 +215,31 @@ sub object {
 
     if (!defined $o) {
         undef;
-    } elsif ( $o =~ explicitIRI ) {
+    } elsif ( $o =~ explicitIRIlike ) {
         [$self->iri($1)];
     } elsif ( $o =~ blankNode ) {
         [$self->blank_identifier($1)];
-    } elsif ( $o =~ /^($Prefix)?:($Name)$/o ) {
+    } elsif ( $o =~ qName ) {
         [$self->prefixed_name($1,$2)];
-    } elsif ( $o =~ /^(.*)@([a-z]{2,8}(-[a-z0-9]{1,8})*)?$/i ) {
-        [$1, defined $2 ? lc($2) : undef];
-    } elsif ( $o =~ /^(.*?)[\^][\^]?($Prefix)?:($Name)$/o ) {
-        my $datatype = $self->prefixed_name($2,$3) // return;
-        if ($datatype eq 'http://www.w3.org/2001/XMLSchema#string') {
-            [$1,undef];
+    } elsif ( $o =~ languageString ) {
+        [$1, lc($2)];
+    } elsif ( $o =~ /^(.*)[@]$/ ) {
+        [$1, undef];
+    } elsif ( $o =~ datatypeString ) {
+        if ($6) {
+            my $datatype = $self->iri($6) // return;
+            if ($datatype eq 'http://www.w3.org/2001/XMLSchema#string') {
+                [$1,undef];
+            } else {
+                [$1,undef,$datatype];
+            }
         } else {
-            [$1,undef,$datatype];
-        }
-    } elsif ( $o =~ /^(.*?)[\^][\^]?<([a-z][a-z0-9+.-]*:.*)>$/ ) {
-        my $datatype = $self->iri($2) // return;
-        if ($datatype eq 'http://www.w3.org/2001/XMLSchema#string') {
-            [$1,undef];
-        } else {
-            [$1,undef,$datatype];
+            my $datatype = $self->prefixed_name($4,$5) // return;
+            if ($datatype eq 'http://www.w3.org/2001/XMLSchema#string') {
+                [$1,undef];
+            } else {
+                [$1,undef,$datatype];
+            }
         }
     } elsif ( $o =~ IRIlike ) {
         [$self->iri($o)];
@@ -351,7 +368,7 @@ elements:
 =item subject
 
 The subject IRI or subject blank node as string. Blank nodes always start with
-C<_>.
+C<_:>.
 
 =item predicate
 
@@ -360,7 +377,8 @@ The predicate IRI.
 =item object
 
 The object IRI or object blank node or literal object as string. Blank nodes
-always start with C<_>.
+always start with C<_:> and literal objects can be detected by existence of the
+(possibly empty) language or datatype element.
 
 =item language
 
@@ -405,6 +423,27 @@ An integer to start creating blank node identifiers with. The default value "0"
 results in blank node identifiers starting from "b1". This option can be useful
 to avoid collision of blank node identifiers when merging multiple aREF
 instances. The current counter value is accessible as accessor.
+
+=head1 EXPORTABLE CONSTANTS
+
+This module exports the following regular expressions, as defined in the aREF
+specification, on request:
+
+=over
+
+=item qName
+
+=item blankNode
+
+=item IRIlike
+
+=item languageString
+
+=item LanguageTag
+
+=item datatypeString
+
+=back
 
 =head1 SEE ALSO
 

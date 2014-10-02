@@ -26,4 +26,8 @@ is $encoder->object({
     lang  => 'en'
 }), 'hello, world!@en';
 
+$encoder = RDF::aREF::Encoder->new( ns => 0 );
+is $encoder->predicate('http://purl.org/dc/terms/title'), 'http://purl.org/dc/terms/title';
+is $encoder->qname('http://www.w3.org/1999/02/22-rdf-syntax-ns#type'), 'rdf_type';
+
 done_testing;

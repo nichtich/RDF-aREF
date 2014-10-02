@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use v5.10;
 
-our $VERSION = '0.13';
+our $VERSION = '0.14';
 
 use RDF::NS;
 use Scalar::Util qw(blessed);
@@ -11,8 +11,16 @@ use Scalar::Util qw(blessed);
 sub new {
     my ($class, %options) = @_;
 
-    $options{ns} ||= RDF::NS->new;
-    unless ( blessed $options{ns} and $options{ns}->isa('RDF::NS') ) {
+    if (!defined $options{ns}) {
+        $options{ns} = RDF::NS->new;
+    } elsif (!$options{ns}) {
+        $options{ns} = bless {
+            rdf =>  'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+            rdfs => 'http://www.w3.org/2000/01/rdf-schema#',
+            owl =>  'http://www.w3.org/2002/07/owl#',
+            xsd =>  'http://www.w3.org/2001/XMLSchema#',
+        }, 'RDF::NS';
+    } elsif ( !blessed $options{ns} or !$options{ns}->isa('RDF::NS') ) {
         $options{ns} = RDF::NS->new($_[0]);
     }
 
@@ -103,9 +111,10 @@ using this module> unless you already have RDF data.
 
 =head2 ns
 
-A default namespace map, given either as hash reference or as version string of
-module L<RDF::NS>. The most recent installed version of RDF::NS is used by
-default.
+A default namespace map, given as version string of module L<RDF::NS> for
+stable qnames or as instance of L<RDF::NS>. The most recent installed version
+of L<RDF::NS> is used by default. The value C<0> can be used to only use
+required namespace mappings (rdf, rdfs, owl and xsd).
 
 =head1 METHODS
 

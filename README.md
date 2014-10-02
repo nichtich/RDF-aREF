@@ -42,40 +42,26 @@ RDF::aREF - Another RDF Encoding Form
 # DESCRIPTION
 
 aREF ([another RDF Encoding Form](http://gbv.github.io/aREF/)) is an encoding
-of RDF graphs in form of arrays, hashes, and Unicode strings. This module 
-implements decoding from aREF data to RDF triples.
-
-See [RDF::aREF::Decoder](https://metacpan.org/pod/RDF::aREF::Decoder) and [RDF::aREF::Encoder](https://metacpan.org/pod/RDF::aREF::Encoder) for usage of this module.
+of RDF graphs in form of arrays, hashes, and Unicode strings. This module
+implements methods for decoding from aREF data to RDF triples
+([RDF::aREF::Decoder](https://metacpan.org/pod/RDF::aREF::Decoder)) and for encoding RDF data in aREF
+([RDF::aREF::Encoder](https://metacpan.org/pod/RDF::aREF::Encoder)).
 
 # EXPORTED FUNCTIONS
 
 ## decode\_aref( $aref, \[ %options \] )
 
-Decodes an aREF document given as hash referece. This function is a shortcut for
+Decodes an aREF document given as hash reference. This function is a shortcut for
+`RDF::aREF::Decoder->new(%options)->decode($aref)`.
 
-    RDF::aREF::Decoder->new(%options)->decode($aref)
+## aref\_query( $aref, \[ $subject \], $query )
 
-See [RDF::aREF::Decoder](https://metacpan.org/pod/RDF::aREF::Decoder) for possible options.
-
-# EXPORTABLE FUNCTIONS (experimental!)
-
-## aref\_iri( \[ $decoder \], $uri )
-
-Encode an URI in aREF.
-
-## aref\_get\_literal( $string | \\@strings )
-
-Converts a list of aREF objects to plain strings by removing language tags or
-datatypes.
-
-## aref\_get\_resource( $string | \\@strings \] )
-
-Decodes one or more resources (URI references or blank nodes)
+experimental.
 
 # SEE ALSO
 
-- This module was first packaged together with [Catmandu::RDF](https://metacpan.org/pod/Catmandu::RDF).
 - aREF is being specified at [http://github.com/gbv/aREF](http://github.com/gbv/aREF).
+- This module was first packaged together with [Catmandu::RDF](https://metacpan.org/pod/Catmandu::RDF).
 - [RDF::Trine](https://metacpan.org/pod/RDF::Trine) contains much more for handling RDF data in Perl.
 - See [RDF::YAML](https://metacpan.org/pod/RDF::YAML) for a similar (outdated) RDF encoding in YAML.
 
