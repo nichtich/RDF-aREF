@@ -1,6 +1,8 @@
 # Changelog for RDF-aREF
 
 {{$NEXT}}
+
+0.15  2014-10-05 15:16:09 CEST
   - better support RDF::Trine in Encoder
   - introduced RDF::aREF::Query (experimental)
 
