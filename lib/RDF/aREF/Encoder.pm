@@ -3,10 +3,10 @@ use strict;
 use warnings;
 use v5.10;
 
-our $VERSION = '0.14';
+our $VERSION = '0.15';
 
 use RDF::NS;
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed reftype);
 
 sub new {
     my ($class, %options) = @_;
@@ -60,21 +60,43 @@ sub predicate {
 
 sub object {
     my ($self, $object) = @_;
-    if ($object->{type} eq 'literal') {
-        my $value = $object->{value};
-        if ($object->{lang}) {
-            return $value.'@'.$object->{lang};
-        } elsif ($object->{datatype}) {
-            my $dt = $self->uri($object->{datatype});
-            return "$value^$dt";
+
+    if (reftype $object eq 'HASH') {
+        if ($object->{type} eq 'literal') {
+            $self->literal( $object->{value}, $object->{lang}, $object->{datatype} )
+        } elsif ($object->{type} eq 'bnode') {
+            $object->{value}
         } else {
-            return "$value@";
+            $self->uri($object->{value})
         }
-    } elsif ($object->{type} eq 'bnode') {
-        return $object->{value};
+    } elsif (reftype $object eq 'ARRAY') {
+        if (@$object == 3) {
+            $self->literal(@$object)
+        } elsif ($object->[0] eq 'URI') {
+            $self->uri("".$object->[1])
+        } elsif ($object->[0] eq 'BLANK') {
+            $self->bnode($object->[1])
+        } else {
+            return
+        }
     } else {
-        return $self->uri($object->{value});
+        return
     }
+}
+
+sub literal {
+    my ($self, $value, $language, $datatype) = @_;
+    if ($language) {
+        $value.'@'.$language
+    } elsif ($datatype) {
+        $value.'^'.$self->uri($datatype)
+    } else {
+        $value.'@'
+    }
+}
+
+sub bnode {
+    '_:'.$_[1]
 }
 
 1;
@@ -101,40 +123,59 @@ RDF::aREF::Encoder - encode RDF to another RDF Encoding Form
         lang  => 'en'
     }); # 'hello, world!@en'
 
+    # method also accepts RDF::Trine::Node instances
+    my $object = $encoder->object( RDF::Trine::Resource->new($iri) );
+
 =head1 DESCRIPTION
 
 This module provides methods to encode RDF data in another RDF Encoding Form
-(aREF). aREF was designed to facilitate creation of RDF data, so consider I<not
-using this module> unless you already have RDF data.
+(aREF). As aREF was designed to facilitate creation of RDF data, it may be
+easier to create aREF "by hand" instead of using this module!
 
 =head1 OPTIONS
 
 =head2 ns
 
 A default namespace map, given as version string of module L<RDF::NS> for
-stable qnames or as instance of L<RDF::NS>. The most recent installed version
+stable qNames or as instance of L<RDF::NS>. The most recent installed version
 of L<RDF::NS> is used by default. The value C<0> can be used to only use
 required namespace mappings (rdf, rdfs, owl and xsd).
 
 =head1 METHODS
 
+Note that no syntax checking is applied, e.g. whether a given URI is a valid
+URI or whether a given language is a valid language tag.
+
 =head2 qname( $uri )
 
-Abbreviate an URI or return undef. For instance
-C<http://purl.org/dc/terms/title> is abbreviated to C<dct_title>.
-
-=head2 predicate( $predicate )
-
-Return an predicate URI as qname, if possible, or as given URI otherwise.
+Abbreviate an URI as qName or return C<undef>. For instance
+C<http://purl.org/dc/terms/title> is abbreviated to "C<dct_title>".
 
 =head2 uri( $uri )
 
-Abbreviate an URI or enclose it in angular brackets.
+Abbreviate an URI or as qName or enclose it in angular brackets.
+
+=head2 predicate( $uri )
+
+Return an predicate URI as qNamem, as "C<a>", or as given URI.
+
+=head2 literal( $value, $language_tag, $datatype_uri )
+
+Encode a literal RDF node by either appending "C<@>" and an optional
+language tag, or "C<^>" and an datatype URI.
+
+=head2 bnode( $identifier )
+
+Encode a blank node by prepending "C<_:>" to its identifier.
 
 =head2 object( $object )
 
-Encode an RDF object given in L<RDF/JSON|http://www.w3.org/TR/rdf-json/>
-format, that is a hash reference with the following fields:
+Encode an RDF object given either as hash reference as defined in
+L<RDF/JSON|http://www.w3.org/TR/rdf-json/> format (see also method
+C<as_hashref> of L<RDF::Trine::Iterator::Graph>), or in array reference as
+internally used by L<RDF::Trine>.
+
+A hash reference is expected to have the following fields:
 
 =over
 
@@ -157,13 +198,26 @@ the datatype URI of the literal value (optional)
 
 =back
 
-Please consider encoding by hand if you try to express non-RDF data in aREF:
-append "C<@>" and an optional language tag to literal strings, append "C<^>"
-and a datatype to datatype values, and abbreviate URIs as qualified names
-(see method qname) or put them in anglular brackets C<< <...> >>.
+An array reference is expected to consists of
+
+=over
+
+=item 
+
+three elements (value, language tag, and datatype uri) for literal nodes,
+
+=item 
+
+two elements "C<URI>" and the URI for URI nodes,
+
+=item
+
+two elements "C<BLANK>" and the blank node identifier for blank nodes.
+
+=back
 
 =head1 SEE ALSO
 
-L<RDF::aREF::Decoder>
+L<RDF::aREF::Decoder>, L<RDF::Trine::Node>
 
 =cut
