@@ -87,9 +87,6 @@ sub namespace_map { # sets the local namespace map
         } else {
             $self->error("namespace map must be map or string");
         }
-    } elsif (defined $map) {
-        # set default namespace (TODO: validate)
-        $ns->{''} = $map;
     }
 
     $self->{ns} = $ns;

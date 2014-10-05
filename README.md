@@ -51,12 +51,12 @@ implements methods for decoding from aREF data to RDF triples
 
 ## decode\_aref( $aref, \[ %options \] )
 
-Decodes an aREF document given as hash reference. This function is a shortcut for
-`RDF::aREF::Decoder->new(%options)->decode($aref)`.
+Decodes an aREF document given as hash reference with [RDF::aREF::Decoder](https://metacpan.org/pod/RDF::aREF::Decoder).
+Shortcut for `RDF::aREF::Decoder->new(%options)->decode($aref)`.
 
 ## aref\_query( $aref, \[ $subject \], $query )
 
-experimental.
+Experimental query function to access parts of an aREF data structure.
 
 # SEE ALSO
 

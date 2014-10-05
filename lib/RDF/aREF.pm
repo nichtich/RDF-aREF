@@ -3,9 +3,9 @@ use strict;
 use warnings;
 use v5.12;
 
-our $VERSION = '0.14';
+our $VERSION = '0.15';
 
-use RDF::aREF::Decoder qw(qName languageTag);
+use RDF::aREF::Query;
 use Carp qw(croak);
 
 use parent 'Exporter';
@@ -18,91 +18,24 @@ sub decode_aref(@) { ## no critic
     RDF::aREF::Decoder->new(%options)->decode($aref);
 }
 
-sub aref_to_trine_statement {
+sub aref_to_trine_statement { # TODO: document?
     # TODO: warn 'RDF::aREF::aref_to_trine_statement will be removed!';
     RDF::aREF::Decoder::aref_to_trine_statement(@_);
 }
 
-# move to Decoder?
 sub aref_query {
-    my $rdf     = shift;
-    my $subject = @_ > 1 ? shift : undef;
-    my $expr    = shift // '';
-    my $type = 'any';
-    my ($language, $datatype);
-
     # TODO: default ns for decoder?
     state $decoder = RDF::aREF::Decoder->new( ns => RDF::NS->new );
 
-    if ($expr =~ /^(.*)\.$/) {
-        $type = 'resource';
-        $expr = $1;
-    } elsif ( $expr =~ /^([^@]*)@([^@]*)$/ ) {
-        ($expr, $language) = ($1, $2);
-        if ( $language eq '' or $language =~ languageTag ) {
-            $type = 'literal';
-        } else {
-            croak 'invalid languageTag in aREF query';
-        }
-    } elsif ( $expr =~ /^([^^]*)\^([^^]*)$/ ) { # TODO: support explicit IRI
-        ($expr, $datatype) = ($1, $2);
-        if ( $datatype =~ qName ) {
-            $type = 'literal';
-            $datatype = $decoder->prefixed_name( split '_', $datatype );
-            $datatype = undef if $datatype eq $decoder->prefixed_name('xsd','string');
-        } else {
-            croak 'invalid datatype qName in aREF query';
-        }
-    }
+    my $rdf     = shift;
+    my $subject = @_ > 1 ? shift : undef;
+    my $expr    = shift // '';
 
-    my @path = split /\./, $expr;
-    foreach (@path) {
-        croak "invalid aref path expression" if $_ !~ qName;
-    }
-
-    # TODO: try abbreviated *and* full URI?
-    my @current = ($subject ? $rdf->{$subject} : $rdf); # TODO: for predicate map
-
-    while (my $field = shift @path) {
-
-        # get objects in aREF
-        @current = grep { defined }
-                   map { (ref $_ and ref $_ eq 'ARRAY') ? @$_ : $_ }
-                   map { $_->{$field} } @current;
-        return if !@current;
-
-        if (@path or $type eq 'resource') {
-
-            # get resources
-            @current = grep { defined } 
-                       map { $decoder->resource($_) } @current;
-
-            if (@path) {
-                # TODO: only if RDF given as predicate map!
-                @current = grep { defined } map { $rdf->{$_} } @current;
-            }
-
-        } else {
-            @current = grep { defined } map { $decoder->object($_) } @current;
-
-            if ($type eq 'literal') {
-                @current = map { $_ if @$_ > 1 } @current;
-
-                if ($language) { # TODO: use language tag substring
-                    @current = grep { $_->[1] and $_->[1] eq $language } @current; 
-                } elsif ($datatype) { # TODO: support qName and explicit IRI
-                    @current = grep { $_->[2] and $_->[2] eq $datatype } @current; 
-                }
-            }
-
-            @current = map { $_->[0] } @current;
-        }
-    }
-
-    return @current;
+    my $query = RDF::aREF::Query->new($expr, $decoder);
+    return $query->apply( $rdf, $subject );
 }
 
-sub aref_get_literal {
+sub aref_get_literal { # TODO: deprecate/remove
     state $decoder = RDF::aREF::Decoder->new;
     if (ref $_[0]) {
         return grep { defined } map { $decoder->plain_literal($_) } @{$_[0]};
@@ -111,7 +44,7 @@ sub aref_get_literal {
     }
 }
 
-sub aref_get_resource {
+sub aref_get_resource { # TODO: deprecate/remove
     state $decoder = RDF::aREF::Decoder->new;
     if (ref $_[0]) {
         return grep { defined } map { $decoder->resource($_) } @{$_[0]};
@@ -180,12 +113,12 @@ implements methods for decoding from aREF data to RDF triples
 
 =head2 decode_aref( $aref, [ %options ] )
 
-Decodes an aREF document given as hash reference. This function is a shortcut for
-C<< RDF::aREF::Decoder->new(%options)->decode($aref) >>.
+Decodes an aREF document given as hash reference with L<RDF::aREF::Decoder>.
+Shortcut for C<< RDF::aREF::Decoder->new(%options)->decode($aref) >>.
 
 =head2 aref_query( $aref, [ $subject ], $query )
 
-experimental.
+Experimental query function to access parts of an aREF data structure.
 
 =head1 SEE ALSO
 
