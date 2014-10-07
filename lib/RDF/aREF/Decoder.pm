@@ -3,10 +3,7 @@ use strict;
 use warnings;
 use v5.10;
 
-our $VERSION = '0.14';
-
-use feature 'unicode_strings';
-no warnings 'uninitialized';
+our $VERSION = '0.17';
 
 use RDF::NS;
 use Carp qw(croak carp);
@@ -101,18 +98,27 @@ sub decode {
 
     $self->namespace_map( $map->{"_ns"} );
 
-    if (exists $map->{_id}) {
+    if (exists $map->{_id}) { 
+        # predicate map    
+
         my $id = $map->{_id};
-        my $subject = ($id // '') ne '' ? $self->expect_resource($id,\'subject') : undef;
+        if ($self->is_null($id,'_id')) {
+            return;
+        }
+
+        my $subject = $id ne '' ? $self->expect_resource($id,'subject') : undef;
         if (defined $subject and $subject ne '') {
             $self->predicate_map( $subject, $map );
         } elsif ($self->{strict}) { 
-            $self->error("invalid subject: ".(ref $id ? reftype($id) : ($id//'')));
+            $self->error("invalid subject: ".(ref $id ? reftype($id) : $id));
         }
+
     } else {
+        # subject map
+        
         for my $key (grep { $_ ne '_ns' } keys %$map) {
             next if $key eq '' and !$self->{strict};
-            my $subject = $self->expect_resource($key,\'subject') // next;
+            my $subject = $self->expect_resource($key,'subject') // next;
             my $predicates = $map->{$key};
             if (exists $predicates->{_id} and ($self->resource($predicates->{_id}) // '') ne $subject) {
                 $self->error("subject _id must be <$subject>");
@@ -148,35 +154,43 @@ sub predicate_map {
         } or next;
 
         my $value = $map->{$_};
-        # empty arrays are always alowed BTW
-        foreach (ref $value eq 'ARRAY' ? @$value : $value) {
 
-            # ???
-            if (defined $self->{null} and $_ eq $self->{null}) {
-                $_ = undef;
-            }
-            # TODO: undef is ignored - is this an error?
-
-            if (ref $_ eq 'HASH') {
-                my $object = exists $_->{_id}
-                    ? ($self->expect_resource($_->{_id},\'object _id') // next)
+        # encoded_object
+        foreach my $o (ref $value eq 'ARRAY' ? @$value : $value) {
+            if ($self->is_null($o,'object')) {
+                next;
+            } elsif (!ref $o) {
+                if (my $object = $self->object($o)) {
+                    $self->triple( $subject, $predicate, $object );
+                }
+                next;
+            } elsif (ref $o eq 'HASH') {
+                my $object = exists $o->{_id}
+                    ? ($self->expect_resource($o->{_id},'object _id') // next)
                     : $self->blank_identifier();
 
                 $self->triple( $subject, $predicate, [$object] );
 
-                unless( $self->{visited}{refaddr $_} ) {
-                    $self->predicate_map( $object, $_ );
-                }
-            } elsif (!ref $_) {
-                if (my $object = $self->object($_)) {
-                    $self->triple( $subject, $predicate, $object );
-                } elsif (!defined $_ and $self->{strict}) {
-                    $self->error('object must not be null');
+                unless( $self->{visited}{refaddr $object} ) {
+                    $self->predicate_map( $object, $o );
                 }
             } else {
-                $self->error('object must not be reference to '.ref $_);
+                $self->error('object must not be reference to '.ref $o);
             }
         }
+    }
+}
+
+sub is_null {
+    my ($self, $value, $check) = @_;
+
+    if ( !defined $value or (defined $self->{null} and $value eq $self->{null} ) ) {
+        if ($check and $self->{strict}) {
+            $self->error("$check must not be null")
+        }
+        1;
+    } else {    
+        0;
     }
 }
 
@@ -185,9 +199,10 @@ sub expect_resource {
     if (my $resource = $self->resource($r)) {
         return $resource;
     } else {
-        $r = reftype $r if ref $r;
-        $r //= '';
-        $self->error("invalid ".$$expect.": $r");
+        if (!$self->is_null($r, $expect)) {
+            $expect .= ": " . (ref $r ? reftype $r : $r);
+            $self->error("invalid $expect");
+        }
         return;
     }
 }

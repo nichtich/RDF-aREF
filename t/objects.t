@@ -28,8 +28,7 @@ while (defined (my $input = shift @tests)) {
     my ($expect, $object, $error) = shift @tests;
     decode_aref 
         { '<x:subject>' => { '<x:predicate>' => $input } },
-        callback => sub { shift; shift; $object = \@_; },
-        error    => sub { $error = shift };
+        callback => sub { shift; shift; $object = \@_; };
     is_deeply $object, $expect, "\"$input\"";
 }
 

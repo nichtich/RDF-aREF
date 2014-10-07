@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use v5.10;
 
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 
 use RDF::aREF::Query;
 use Scalar::Util qw(blessed);

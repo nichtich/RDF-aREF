@@ -1,6 +1,8 @@
 # Changelog for RDF-aREF
 
 {{$NEXT}}
+  - fix failure on Perl 5.10
+  - more cleanup and tests
 
 0.16  2014-10-07 10:50:16 CEST
   - cleanup
