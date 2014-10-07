@@ -9,6 +9,7 @@ sub check_errors(@) {
     my %options = @_;
     my $msg = delete $options{msg};
     my $decoder = RDF::aREF::Decoder->new( complain => 2, %options );
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
     while (@$errors) {
         my $aref   = shift @$errors;
         eval { $decoder->decode( $aref ) };

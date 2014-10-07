@@ -8,6 +8,7 @@ sub test_encoder(@) {
     while (@tests) {
         my $input  = shift @tests;
         my $expect = shift @tests;
+        local $Test::Builder::Level = $Test::Builder::Level + 1;
         is $encoder->$method($input), $expect, $expect;
     }
 }

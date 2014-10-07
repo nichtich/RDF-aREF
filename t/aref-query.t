@@ -60,4 +60,9 @@ while ( my ($query, $count) = each %names ) {
     is scalar @names, $count, $query;
 }
 
+foreach my $query ( "dct_title@#", "dct_date^_" ) {
+    eval { RDF::Query->new($query) };
+    ok $@, 'error in aREF query';
+}
+
 done_testing;
