@@ -42,7 +42,7 @@ test_decode $_, "$alice ${_rdf}type ${_foaf}Person" for
     { $alice => { rdf_type => "foaf_Person" } },
     { $alice => { "${_rdf}type" => "foaf_Person" } },
     { $alice => { "<${_rdf}type>" => "foaf_Person" } },
-    { _ns => { _ => $_foaf, x => $_ex }, x_alice => { a => "foaf_Person" } },
+    { _ns => { x => $_ex }, x_alice => { a => "foaf_Person" } },
 ;
 
 # simple literals
@@ -83,6 +83,19 @@ test_decode $_, "_:b1 ${_rdf}type ${_foaf}Person\n$alice ${_foaf}knows _:b1" for
 # TODO: more blank nodes
 
 =cut
+# valid
+decode_aref { '<x:subj>' => { a => undef } }, complain => 2;
+decode_aref { '' => { a => 'foaf_Person' } }, complain => 2, null => '';
+ok !$error, 'not strict by default';
+
+my $rdf = decode_aref { '<x:subj>' => { a => '' } }, complain => 2, null => '';
+ok !$rdf, 'empty string as null';
+
+decode_aref { '<x:subj>' => { a => '' } }, %handler, strict => 1;
+ok !$error && $rdf, 'empty string not null by default';
+=cut
+
+=cut
 my @looks_like_error = (
     { '0' => { a => 'foaf_Person' }, _ns => 'x:' },
     { _id => '0', a => 'foaf_Person', _ns => 'x:' },
@@ -114,6 +127,5 @@ while (my ($aref, $literal) = each %tests) {
     my $got = $decoder->plain_literal($aref);
     is $got, $literal, $aref;
 }
-
 
 done_testing;

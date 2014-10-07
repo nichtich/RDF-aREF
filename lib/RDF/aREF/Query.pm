@@ -7,10 +7,14 @@ our $VERSION = '0.15';
 
 use RDF::aREF::Decoder qw(qName languageTag);
 use Carp qw(croak);
+use RDF::NS;
 
 sub new {
-    my ($class, $expr, $decoder) = @_;
-    $decoder //= RDF::aREF::Decoder->new();
+    my ($class, %options) = @_;
+
+    my $expr    = $options{query} or croak "query required";
+    my $ns      = $options{ns} // RDF::NS->new;
+    my $decoder = $options{decoder} // RDF::aREF::Decoder->new( ns => $ns );
 
     my $type = 'any';
     my ($language, $datatype);
@@ -105,18 +109,64 @@ __END__
 
 =head1 NAME
 
-RDF::aREF::Query - query expression to access parts of aREF data
+RDF::aREF::Query - aREF query expression
+
+=head1 SYNOPSIS
+
+    my $rdf = {
+        'http://example.org/book' => {
+            dct_creator => [
+                'http://example.org/alice', 
+                'http://example.org/bob'
+            ]
+        },
+        'http://example.org/alice' => {
+            foaf_name => "Alice"
+        },
+        'http://example.org/bob' => {
+            foaf_name => "Bob"
+        }
+    };
+
+    my $getnames = RDF::aREF::Query->new( 
+        query => 'dct_creator.foaf_name' 
+    );
+    my @names = $getnames->apply( $rdf, 'http://example.org/boo' );
 
 =head1 DESCRIPTION
 
-This module is experimental.
+Implements L<aREF query|http://gbv.github.io/aREF/aREF.html#aref-query>, a
+query language to access strings and nodes from agiven RDF graph.
 
-See function C<aref_query> in L<RDF::aREF> for usage.
+See also function C<aref_query> in L<RDF::aREF>.
+
+=head1 CONFIGURATION
+
+The constructor expects the following options:
+
+=over
+
+=item query
+
+L<aREF query|http://gbv.github.io/aREF/aREF.html#aref-query> expression
+
+=item decoder
+
+Instance of L<RDF::aREF::Decoder> (a new instance is created unless given)
+
+=item ns
+
+Optional namespace map, passed to the constructor of L<RDF::aREF::Decoder>.
+This option is ignored if option C<decoder> was supplied.
+
+=back
 
 =head1 METHODS
 
-=head1 new( $expression [, $decoder ] )
+=head1 apply( $rdf [, $origin ] )
 
-=head1 apply( $rdf [, $subject ] )
+Perform the query on a given RDF graph. The origin node must be provided as string
+unless the RDF graph is provided as
+L<predicate map|http://gbv.github.io/aREF/aREF.html#predicate-maps>.
 
 =cut

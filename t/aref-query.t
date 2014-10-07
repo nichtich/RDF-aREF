@@ -3,6 +3,7 @@ use strict;
 use warnings;
 
 use RDF::aREF qw(aref_query);
+use RDF::aREF::Query;
 
 BEGIN {
     eval { require JSON; 1; } 
@@ -14,6 +15,8 @@ my $uri = "http://dx.doi.org/10.2474/trol.7.147";
 
 is_deeply [ aref_query($rdf, $uri, 'dct_title') ], 
     ['Frictional Coefficient under Banana Skin'], 'dct_title';
+is_deeply [ aref_query($rdf, $uri, RDF::aREF::Query->new(query => 'dct_title')) ], 
+    ['Frictional Coefficient under Banana Skin'], 'dct_title (RDF::aREF::Query)';
 is_deeply [ aref_query($rdf, $uri, 'dct_title@') ], 
     ['Frictional Coefficient under Banana Skin'], 'dct_title@';
 is_deeply [ aref_query($rdf, $uri, 'dct_title^xsd_string') ], 

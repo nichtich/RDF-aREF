@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use v5.10;
 
-our $VERSION = '0.15';
+our $VERSION = '0.16';
 
 use RDF::NS;
 use Scalar::Util qw(blessed reftype);
@@ -21,7 +21,7 @@ sub new {
             xsd =>  'http://www.w3.org/2001/XMLSchema#',
         }, 'RDF::NS';
     } elsif ( !blessed $options{ns} or !$options{ns}->isa('RDF::NS') ) {
-        $options{ns} = RDF::NS->new($_[0]);
+        $options{ns} = RDF::NS->new($options{ns});
     }
 
     $options{sn} = $options{ns}->REVERSE;

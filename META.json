@@ -4,7 +4,7 @@
       "Jakob Voß"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Dist::Milla version v1.0.8, Dist::Zilla version 5.020, CPAN::Meta::Converter version 2.142060",
+   "generated_by" : "Dist::Milla version v1.0.8, Dist::Zilla version 5.020, CPAN::Meta::Converter version 2.141520",
    "license" : [
       "perl_5"
    ],
@@ -26,7 +26,7 @@
    "prereqs" : {
       "configure" : {
          "requires" : {
-            "Module::Build::Tiny" : "0.038"
+            "Module::Build::Tiny" : "0.037"
          }
       },
       "develop" : {
@@ -37,8 +37,8 @@
       },
       "runtime" : {
          "requires" : {
-            "RDF::NS" : "20130816",
-            "perl" : "v5.12.0"
+            "RDF::NS" : "20140910",
+            "perl" : "v5.10.0"
          }
       },
       "test" : {
@@ -60,7 +60,7 @@
          "web" : "https://github.com/nichtich/RDF-aREF"
       }
    },
-   "version" : "0.15",
+   "version" : "0.16",
    "x_contributors" : [
       "Jakob Voss <jakob@nichtich.de>",
       "Jakob Voss <voss@gbv.de>"

@@ -1,5 +1,5 @@
-requires 'perl', '5.12.0';
-requires 'RDF::NS', '>= 20130816';
+requires 'perl', '5.10.0';
+requires 'RDF::NS', '20140910';
 
 test_requires 'JSON';
 test_requires 'RDF::Trine';

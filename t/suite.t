@@ -24,6 +24,7 @@ use RDF::aREF qw(decode_aref aref_to_trine_statement);
 
 foreach my $file (sort <t/suite/*.json>) {
     $file =~ s/\.json$//;
+    my $name = $file; $name =~ s{^t/suite/}{};
     my $aref = JSON::from_json(slurp("$file.json"));
     my $nt   = slurp("$file.nt");
     my $err  = slurp("$file.err");
@@ -33,29 +34,25 @@ foreach my $file (sort <t/suite/*.json>) {
     # TODO: use iterator instead
     # a (->next returns a trine-statement)
     $model->begin_bulk_ops;
-    RDF::aREF::Decoder->new(
+    my $decoder = RDF::aREF::Decoder->new(
         callback => sub {
             $model->add_statement( aref_to_trine_statement( @_ ) ) 
         }, 
-        error  => sub { 
-            my $e = shift;
-            $e =~ s/\(0x[a-z0-9]+\)//g; # refs
-            push @errors, $e;
-        },
+        complain => 2,
         strict => ($file =~ /strict/ ? 1 : 0),
-    )->decode( $aref );
-    # decode_as_iterator();
-    # decode_as_iterator( as => 'trine_statement' ); # if (exists aref_to_$foo) ...
-    # decode_as_iterator( as => sub { aref_to_trine_statement() } );
-    $model->end_bulk_ops;
-    my $got = RDF::Trine::Serializer::NTriples::Canonical->new(
-        onfail => 'truncate',
-    )->serialize_model_to_string($model);
-    $got =~ s/\r|\n$//g;
-
-    $file =~ s{.*/}{};
-    is $got, $nt, $file;
-    is join("\n", sort @errors), $err, $err;
+    );
+    eval { $decoder->decode($aref) };
+    if ($err) {
+        is $@, $err." at t/suite.t line 44.\n", "$name.err";
+    } else {
+        $model->end_bulk_ops;
+        my $got = RDF::Trine::Serializer::NTriples::Canonical->new(
+            onfail => 'truncate',
+        )->serialize_model_to_string($model);
+        $got =~ s/\r|\n$//g;
+        $file =~ s{.*/}{};
+        is $got, $nt, $file;
+    }
 }
 
 done_testing;

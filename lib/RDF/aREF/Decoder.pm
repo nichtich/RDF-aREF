@@ -9,7 +9,8 @@ use feature 'unicode_strings';
 no warnings 'uninitialized';
 
 use RDF::NS;
-use Scalar::Util qw(refaddr blessed);
+use Carp qw(croak carp);
+use Scalar::Util qw(refaddr reftype blessed);
 
 use parent 'Exporter'; 
 our @EXPORT_OK = qw(prefix qName blankNode IRIlike languageString languageTag datatypeString);
@@ -38,7 +39,7 @@ sub new {
 
     my $self = bless {
         ns           => $options{ns},
-        error        => $options{error} // sub { say STDERR $_[0] },
+        complain     => $options{complain} // 1,
         strict       => $options{strict} // 0,
         null         => $options{null}, # undef by default
         bnode_prefix => $options{bnode_prefix} || 'b',
@@ -106,7 +107,7 @@ sub decode {
         if (defined $subject and $subject ne '') {
             $self->predicate_map( $subject, $map );
         } elsif ($self->{strict}) { 
-            $self->error("invalid subject: $id");
+            $self->error("invalid subject: ".(ref $id ? reftype($id) : ($id//'')));
         }
     } else {
         for my $key (grep { $_ ne '_ns' } keys %$map) {
@@ -184,6 +185,8 @@ sub expect_resource {
     if (my $resource = $self->resource($r)) {
         return $resource;
     } else {
+        $r = reftype $r if ref $r;
+        $r //= '';
         $self->error("invalid ".$$expect.": $r");
         return;
     }
@@ -281,8 +284,17 @@ sub triple {
 }
 
 sub error {
-    $_[0]->{error}->($_[1]); # TODO: also pass location path
-    return;
+    my ($self, $message, $node) = @_;
+
+    # TODO: include $node instead of $message (bless $message, 'RDF::aREF::Error')
+    
+    if (!$self->{complain}) {
+        return;
+    } elsif ($self->{complain} == 1) {
+        carp $message;
+    } else {
+        croak $message;
+    }
 }
 
 sub bnode_count {
@@ -391,10 +403,10 @@ C<http://www.w3.org/2001/XMLSchema#string>.
 For convenience an instance of L<RDF::Trine::Model> can also be used as
 callback.
 
-=head2 error
+=head2 complain
 
-A code reference that decoding errors are passed to. By default an error
-message is printed to STDOUT.
+What to do on errors. Set to 1 be default (warn). Set to 0 to ignore. Other
+values will die on errors.
 
 =head2 strict
 
@@ -423,8 +435,8 @@ instances. The current counter value is accessible as accessor.
 
 =head1 EXPORTABLE CONSTANTS
 
-This module exports the following regular expressions, as defined in the aREF
-specification, on request:
+On request this module exports the following regular expressions, as defined in the 
+L<aREF specification|http://gbv.github.io/aREF/aREF.html>:
 
 =over
 
@@ -436,7 +448,7 @@ specification, on request:
 
 =item languageString
 
-=item LanguageTag
+=item languageTag
 
 =item datatypeString
 

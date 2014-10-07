@@ -44,7 +44,8 @@ $decoder->decode( $aref );
 is $model->size, 4, 'bnode collision';
 
 # errors
-my $error;
+my $warning;
+local $SIG{__WARN__} = sub { $warning = shift };
 decode_aref( {
         _id => 'isbn:123', 
         rdfs_seeAlso => [
@@ -52,9 +53,9 @@ decode_aref( {
             'isbn:789'
         ]
     }, 
-    callback => $model, error => sub { $error = shift }
+    callback => $model,
 );
-ok $error, "bad IRI";
+ok $warning, "bad IRI";
 is $model->size, 5, 'ignored illformed URI';
 
 

@@ -15,11 +15,11 @@ RDF::aREF - Another RDF Encoding Form
     my $rdf = {
       _id       => 'http://example.com/people#alice',
       foaf_name => 'Alice Smith',
-      foaf_age  => '42^xsd:integer',
+      foaf_age  => '42^xsd_integer',
       foaf_homepage => [
          { 
            _id => 'http://personal.example.org/',
-           dct_modified => '2010-05-29^xsd:date',
+           dct_modified => '2010-05-29^xsd_date',
          },
         'http://work.example.com/asmith/',
       ],
@@ -35,34 +35,38 @@ RDF::aREF - Another RDF Encoding Form
         }
     );
     
+    my @lastmod = aref_query( $rdf, 'foaf_homepage.dct_modified^' );
+
     my $model = RDF::Trine::Model->new;
     decode_aref( $rdf, callback => $model );
     print RDF::Trine::Serializer->new('Turtle')->serialize_model_to_string($model);
 
 # DESCRIPTION
 
-aREF ([another RDF Encoding Form](http://gbv.github.io/aREF/)) is an encoding
-of RDF graphs in form of arrays, hashes, and Unicode strings. This module
-implements methods for decoding from aREF data to RDF triples
-([RDF::aREF::Decoder](https://metacpan.org/pod/RDF::aREF::Decoder)) and for encoding RDF data in aREF
-([RDF::aREF::Encoder](https://metacpan.org/pod/RDF::aREF::Encoder)).
+**aREF** ([another RDF Encoding Form](http://gbv.github.io/aREF/)) is an
+encoding of RDF graphs in form of arrays, hashes, and Unicode strings. This
+module provides methods for decoding from aREF data to RDF triples
+([RDF::aREF::Decoder](https://metacpan.org/pod/RDF::aREF::Decoder)), for encoding RDF data in aREF ([RDF::aREF::Encoder](https://metacpan.org/pod/RDF::aREF::Encoder)),
+and for querying parts of an RDF graph ([RDF::aREF::Query](https://metacpan.org/pod/RDF::aREF::Query)).
 
 # EXPORTED FUNCTIONS
+
+The following functions are exported by default.
 
 ## decode\_aref( $aref, \[ %options \] )
 
 Decodes an aREF document given as hash reference with [RDF::aREF::Decoder](https://metacpan.org/pod/RDF::aREF::Decoder).
-Shortcut for `RDF::aREF::Decoder->new(%options)->decode($aref)`.
+Equivalent to `RDF::aREF::Decoder->new(%options)->decode($aref)`.
 
-## aref\_query( $aref, \[ $subject \], $query )
+## aref\_query( $aref, \[ $origin \], $query )
 
-Experimental query function to access parts of an aREF data structure.
+Query parts of an aREF data structure. See [RDF::aREF::Query](https://metacpan.org/pod/RDF::aREF::Query) for details.
 
 # SEE ALSO
 
-- aREF is being specified at [http://github.com/gbv/aREF](http://github.com/gbv/aREF).
-- This module was first packaged together with [Catmandu::RDF](https://metacpan.org/pod/Catmandu::RDF).
-- [RDF::Trine](https://metacpan.org/pod/RDF::Trine) contains much more for handling RDF data in Perl.
+- aREF is specified at [http://github.com/gbv/aREF](http://github.com/gbv/aREF).
+- See [Catmandu::RDF](https://metacpan.org/pod/Catmandu::RDF) for an application of this module.
+- Usee [RDF::Trine](https://metacpan.org/pod/RDF::Trine) for more elaborated handling of RDF data in Perl.
 - See [RDF::YAML](https://metacpan.org/pod/RDF::YAML) for a similar (outdated) RDF encoding in YAML.
 
 # COPYRIGHT AND LICENSE

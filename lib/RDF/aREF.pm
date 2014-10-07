@@ -1,11 +1,12 @@
 package RDF::aREF;
 use strict;
 use warnings;
-use v5.12;
+use v5.10;
 
-our $VERSION = '0.15';
+our $VERSION = '0.16';
 
 use RDF::aREF::Query;
+use Scalar::Util qw(blessed);
 use Carp qw(croak);
 
 use parent 'Exporter';
@@ -18,39 +19,22 @@ sub decode_aref(@) { ## no critic
     RDF::aREF::Decoder->new(%options)->decode($aref);
 }
 
-sub aref_to_trine_statement { # TODO: document?
-    # TODO: warn 'RDF::aREF::aref_to_trine_statement will be removed!';
-    RDF::aREF::Decoder::aref_to_trine_statement(@_);
-}
-
 sub aref_query {
-    # TODO: default ns for decoder?
-    state $decoder = RDF::aREF::Decoder->new( ns => RDF::NS->new );
+    my $rdf    = shift;
+    my $origin = @_ > 1 ? shift : undef;
+    my $query  = shift;
 
-    my $rdf     = shift;
-    my $subject = @_ > 1 ? shift : undef;
-    my $expr    = shift // '';
+    unless( blessed $query and $query->isa('RDF::aREF::Query') ) {
+        $query = RDF::aREF::Query->new( query => $query );
+    }
 
-    my $query = RDF::aREF::Query->new($expr, $decoder);
-    return $query->apply( $rdf, $subject );
+    $query->apply($rdf, $origin);
 }
 
-sub aref_get_literal { # TODO: deprecate/remove
-    state $decoder = RDF::aREF::Decoder->new;
-    if (ref $_[0]) {
-        return grep { defined } map { $decoder->plain_literal($_) } @{$_[0]};
-    } else {
-        $decoder->plain_literal(@_);
-    }
-}
-
-sub aref_get_resource { # TODO: deprecate/remove
-    state $decoder = RDF::aREF::Decoder->new;
-    if (ref $_[0]) {
-        return grep { defined } map { $decoder->resource($_) } @{$_[0]};
-    } else {
-        $decoder->resource(@_);
-    }
+# FIXME: this is undocumented but used by Catmandu::RDF. Remove?
+sub aref_to_trine_statement {
+    # warn 'RDF::aREF::aref_to_trine_statement will be removed!';
+    RDF::aREF::Decoder::aref_to_trine_statement(@_);
 }
 
 1;
@@ -77,11 +61,11 @@ RDF::aREF - Another RDF Encoding Form
     my $rdf = {
       _id       => 'http://example.com/people#alice',
       foaf_name => 'Alice Smith',
-      foaf_age  => '42^xsd:integer',
+      foaf_age  => '42^xsd_integer',
       foaf_homepage => [
          { 
            _id => 'http://personal.example.org/',
-           dct_modified => '2010-05-29^xsd:date',
+           dct_modified => '2010-05-29^xsd_date',
          },
         'http://work.example.com/asmith/',
       ],
@@ -97,28 +81,32 @@ RDF::aREF - Another RDF Encoding Form
         }
     );
     
+    my @lastmod = aref_query( $rdf, 'foaf_homepage.dct_modified^' );
+
     my $model = RDF::Trine::Model->new;
     decode_aref( $rdf, callback => $model );
     print RDF::Trine::Serializer->new('Turtle')->serialize_model_to_string($model);
 
 =head1 DESCRIPTION
 
-aREF (L<another RDF Encoding Form|http://gbv.github.io/aREF/>) is an encoding
-of RDF graphs in form of arrays, hashes, and Unicode strings. This module
-implements methods for decoding from aREF data to RDF triples
-(L<RDF::aREF::Decoder>) and for encoding RDF data in aREF
-(L<RDF::aREF::Encoder>).
+B<aREF> (L<another RDF Encoding Form|http://gbv.github.io/aREF/>) is an
+encoding of RDF graphs in form of arrays, hashes, and Unicode strings. This
+module provides methods for decoding from aREF data to RDF triples
+(L<RDF::aREF::Decoder>), for encoding RDF data in aREF (L<RDF::aREF::Encoder>),
+and for querying parts of an RDF graph (L<RDF::aREF::Query>).
 
 =head1 EXPORTED FUNCTIONS
+
+The following functions are exported by default.
 
 =head2 decode_aref( $aref, [ %options ] )
 
 Decodes an aREF document given as hash reference with L<RDF::aREF::Decoder>.
-Shortcut for C<< RDF::aREF::Decoder->new(%options)->decode($aref) >>.
+Equivalent to C<< RDF::aREF::Decoder->new(%options)->decode($aref) >>.
 
-=head2 aref_query( $aref, [ $subject ], $query )
+=head2 aref_query( $aref, [ $origin ], $query )
 
-Experimental query function to access parts of an aREF data structure.
+Query parts of an aREF data structure. See L<RDF::aREF::Query> for details.
 
 =head1 SEE ALSO
 
@@ -126,15 +114,15 @@ Experimental query function to access parts of an aREF data structure.
 
 =item
 
-aREF is being specified at L<http://github.com/gbv/aREF>.
+aREF is specified at L<http://github.com/gbv/aREF>.
 
 =item 
 
-This module was first packaged together with L<Catmandu::RDF>.
+See L<Catmandu::RDF> for an application of this module.
 
 =item
 
-L<RDF::Trine> contains much more for handling RDF data in Perl.
+Usee L<RDF::Trine> for more elaborated handling of RDF data in Perl.
 
 =item
 
