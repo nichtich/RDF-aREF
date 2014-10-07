@@ -1,6 +1,8 @@
 # Changelog for RDF-aREF
 
 {{$NEXT}}
+
+0.16  2014-10-07 10:50:16 CEST
   - cleanup
   - only require Perl 5.10 (issue #5)
 
