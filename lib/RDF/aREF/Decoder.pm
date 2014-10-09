@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use v5.10;
 
-our $VERSION = '0.17';
+our $VERSION = '0.18';
 
 use RDF::NS;
 use Carp qw(croak carp);
@@ -30,6 +30,7 @@ use constant datatypeString => qr/^(.*?)[\^]
                                   ((($PREFIX)?_($NAME))|<([a-z][a-z0-9+.-]*:.*)>)$/x;
 
 use constant explicitIRIlike => qr/^<(.+)>$/;
+use constant xsd_string => 'http://www.w3.org/2001/XMLSchema#string';
 
 sub new {
     my ($class, %options) = @_;
@@ -139,7 +140,7 @@ sub predicate_map {
 
         my $predicate = do {
             if ($_ eq 'a') {
-                "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
+                'http://www.w3.org/1999/02/22-rdf-syntax-ns#type';
             } elsif ( $_ =~ /^<(.+)>$/ ) {
                 $self->iri($1);
             } elsif ( $_ =~ qName ) { 
@@ -243,14 +244,14 @@ sub object {
     } elsif ( $o =~ datatypeString ) {
         if ($6) {
             my $datatype = $self->iri($6) // return;
-            if ($datatype eq 'http://www.w3.org/2001/XMLSchema#string') {
+            if ($datatype eq xsd_string) {
                 [$1,undef];
             } else {
                 [$1,undef,$datatype];
             }
         } else {
             my $datatype = $self->prefixed_name($4,$5) // return;
-            if ($datatype eq 'http://www.w3.org/2001/XMLSchema#string') {
+            if ($datatype eq xsd_string) {
                 [$1,undef];
             } else {
                 [$1,undef,$datatype];

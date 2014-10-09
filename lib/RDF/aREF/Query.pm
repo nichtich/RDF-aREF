@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use v5.10;
 
-our $VERSION = '0.15';
+our $VERSION = '0.18';
 
 use RDF::aREF::Decoder qw(qName languageTag);
 use Carp qw(croak);
@@ -54,11 +54,27 @@ sub new {
     }, $class;
 }
 
+sub query {
+    my ($self) = @_;
+    my $query = join '.', @{$self->{path}};
+    if ($self->{type} eq 'literal') {
+        if ($self->{datatype}) {
+            $query .= '^' . $self->{datatype};
+        } else {
+            $query .= '@' . ($self->{language} // '');
+        }
+    } elsif ($self->{type} eq 'resource') {
+        $query .= '.';
+    }
+    $query;
+}
+
 sub apply {
     my ($self, $rdf, $subject) = @_;
 
     my $decoder = $self->{decoder};
 
+    # TODO: Support RDF::Trine::Model
     # TODO: try abbreviated *and* full URI?
     my @current = ($subject ? $rdf->{$subject} : $rdf); # TODO: for predicate map
 
@@ -83,11 +99,11 @@ sub apply {
                 @current = grep { defined } map { $rdf->{$_} } @current;
             }
 
-        } else {
+        } else { # last path element
             @current = grep { defined } map { $decoder->object($_) } @current;
 
             if ($self->{type} eq 'literal') {
-                @current = map { $_ if @$_ > 1 } @current;
+                @current = grep { @$_ > 1 } @current;
 
                 if ($self->{language}) { # TODO: use language tag substring
                     @current = grep { $_->[1] and $_->[1] eq $self->{language} } 
@@ -97,7 +113,7 @@ sub apply {
                 }
             }
 
-            @current = map { $_->[0] } @current;
+            @current = map { $_->[0] } @current; # IRI or string value
         }
     }
 
@@ -132,13 +148,21 @@ RDF::aREF::Query - aREF query expression
         query => 'dct_creator.foaf_name' 
     );
     my @names = $getnames->apply( $rdf, 'http://example.org/boo' );
+    $getnames->query; # 'dct_creator.foaf_name'
+
+    use RDF::aREF qw(aref_query_map);
+    my $record = aref_query_map( $rdf, $publication, {
+        'dct_creator@' => 'creator',
+        'dct_creator.foaf_name' => 'creator',
+    });
 
 =head1 DESCRIPTION
 
 Implements L<aREF query|http://gbv.github.io/aREF/aREF.html#aref-query>, a
 query language to access strings and nodes from agiven RDF graph.
 
-See also function C<aref_query> in L<RDF::aREF>.
+See also functions C<aref_query> and C<aref_query_map> in L<RDF::aREF> for
+convenient application.
 
 =head1 CONFIGURATION
 
@@ -152,21 +176,32 @@ L<aREF query|http://gbv.github.io/aREF/aREF.html#aref-query> expression
 
 =item decoder
 
-Instance of L<RDF::aREF::Decoder> (a new instance is created unless given)
+Instance of L<RDF::aREF::Decoder> to map qNames to URIs. A new instance is
+created unless given.
 
 =item ns
 
-Optional namespace map, passed to the constructor of L<RDF::aREF::Decoder>.
-This option is ignored if option C<decoder> was supplied.
+Optional namespace map (L<RDF::NS>), passed to the constructor of
+L<RDF::aREF::Decoder> if no decoder is given.
 
 =back
 
 =head1 METHODS
 
-=head1 apply( $rdf [, $origin ] )
+=head1 apply( $graph [, $origin ] )
 
-Perform the query on a given RDF graph. The origin node must be provided as string
-unless the RDF graph is provided as
-L<predicate map|http://gbv.github.io/aREF/aREF.html#predicate-maps>.
+Perform the query on a given RDF graph. The graph can be given as aREF
+structure (subject map or predicate map) or as instance of
+L<RDF::Trine::Model>. An origin subject node must be provided unless the RDF
+graph is provided as L<predicate
+map|http://gbv.github.io/aREF/aREF.html#predicate-maps>.
+
+=head1 query
+
+Returns the aREF query expression
+
+=head1 SEE ALSO
+
+Use SPARQL for more complex queries, e.g. with L<RDF::Trine::Store::SPARQL>.
 
 =cut

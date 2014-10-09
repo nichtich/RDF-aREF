@@ -10,9 +10,9 @@ use Scalar::Util qw(blessed);
 use Carp qw(croak);
 
 use parent 'Exporter';
-our @EXPORT = qw(decode_aref);
-our @EXPORT_OK = qw(decode_aref aref_query aref_to_trine_statement);
-our %EXPORT_TAGS = (all => [@EXPORT_OK]);
+our @EXPORT = qw(decode_aref aref_query aref_query_map);
+our @EXPORT_OK = qw(aref_to_trine_statement);
+our %EXPORT_TAGS = (all => [@EXPORT, @EXPORT_OK]);
 
 sub decode_aref(@) { ## no critic
     my ($aref, %options) = @_;
@@ -20,15 +20,38 @@ sub decode_aref(@) { ## no critic
 }
 
 sub aref_query {
-    my $rdf    = shift;
-    my $origin = @_ > 1 ? shift : undef;
-    my $query  = shift;
+    my ($graph, $origin, $query) = @_ < 3 ? ($_[0], undef, $_[1]) : @_;
 
     unless( blessed $query and $query->isa('RDF::aREF::Query') ) {
         $query = RDF::aREF::Query->new( query => $query );
     }
 
-    $query->apply($rdf, $origin);
+    $query->apply($graph, $origin);
+}
+
+
+sub aref_query_map {
+    my ($graph, $origin, $map) = @_ < 3 ? ($_[0], undef, $_[1]) : @_;
+
+    my %record;
+    
+    while (my ($query, $field) = each %$map) {
+        my @values = aref_query( $origin ? ($graph, $origin, $query)
+                                         : ($graph, $query) );
+        if (@values) {
+            if ($record{$field}) {
+                if (ref $record{$field}) {
+                    push @{$record{$field}}, @values;
+                } else {
+                    $record{$field} = [ $record{$field}, @values ];
+                }
+            } else {
+                $record{$field} = @values > 1 ? \@values : $values[0];
+            }
+        }
+    }
+
+    \%record;
 }
 
 # FIXME: this is undocumented but used by Catmandu::RDF. Remove?
@@ -104,9 +127,13 @@ The following functions are exported by default.
 Decodes an aREF document given as hash reference with L<RDF::aREF::Decoder>.
 Equivalent to C<< RDF::aREF::Decoder->new(%options)->decode($aref) >>.
 
-=head2 aref_query( $aref, [ $origin ], $query )
+=head2 aref_query( $graph, [ $origin ], $query )
 
 Query parts of an aREF data structure. See L<RDF::aREF::Query> for details.
+
+=head2 aref_query_map( $graph, [ $origin ], $query_map )
+
+Map parts of an aREF data structure to a flat key-value structure.
 
 =head1 SEE ALSO
 

@@ -2,7 +2,7 @@ use Test::More;
 use strict;
 use warnings;
 
-use RDF::aREF qw(aref_query);
+use RDF::aREF qw(aref_query aref_query_map);
 use RDF::aREF::Query;
 
 BEGIN {
@@ -63,6 +63,30 @@ while ( my ($query, $count) = each %names ) {
 foreach my $query ( "dct_title@#", "dct_date^_" ) {
     eval { RDF::Query->new($query) };
     ok $@, 'error in aREF query';
+}
+
+{
+    my $rdf = {
+        'http://example.org/book' => {
+            dct_creator => [
+                'http://example.org/alice', 
+                "Bob"
+            ]
+        },
+        'http://example.org/alice' => {
+            foaf_name => "Alice"
+        },
+    };
+    my $uri = 'http://example.org/book';
+
+    is_deeply [ sort(aref_query($rdf, $uri, 'dct_creator')) ], 
+        [qw(Bob http://example.org/alice)], 'literal and URI';
+
+    my $record = aref_query_map( $rdf, $uri, {
+        'dct_creator@' => 'creator',
+        'dct_creator.foaf_name' => 'creator',
+    });
+    is_deeply [ sort @{$record->{creator}} ], [qw(Alice Bob)], 'aref_query_map';
 }
 
 done_testing;

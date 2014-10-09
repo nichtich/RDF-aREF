@@ -58,9 +58,13 @@ The following functions are exported by default.
 Decodes an aREF document given as hash reference with [RDF::aREF::Decoder](https://metacpan.org/pod/RDF::aREF::Decoder).
 Equivalent to `RDF::aREF::Decoder->new(%options)->decode($aref)`.
 
-## aref\_query( $aref, \[ $origin \], $query )
+## aref\_query( $graph, \[ $origin \], $query )
 
 Query parts of an aREF data structure. See [RDF::aREF::Query](https://metacpan.org/pod/RDF::aREF::Query) for details.
+
+## aref\_query\_map( $graph, \[ $origin \], $query\_map )
+
+Map parts of an aREF data structure to a flat key-value structure.
 
 # SEE ALSO
 
