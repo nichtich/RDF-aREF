@@ -28,4 +28,7 @@ decode_ok { _id => 'an:id', a => ['0','ex:ample'] }, 1, null => 0;
 decode_ok { _id => 'an:id', a => [undef,'ex:ample'] }, 1, null => undef;
 decode_ok { 'an:id' => { a => 'ex:ample' }, '0' => { a => 'ex:ample' } }, 1, null => 0;
 
+# ignore as subject
+decode_ok { '' => { a => 'ex:ample' } }, 0, null => '';
+
 done_testing;

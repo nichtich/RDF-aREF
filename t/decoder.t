@@ -23,6 +23,7 @@ sub decode {
 }
 
 sub test_decode(@) { ## no critic
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
     is decode($_[0]), $_[1];
 }
 
@@ -75,8 +76,8 @@ test_decode [ $_, bnode_prefix => 'x' ], "$alice ${_foaf}knows _:x1" for
 ;
 
 test_decode $_, "_:b1 ${_rdf}type ${_foaf}Person\n$alice ${_foaf}knows _:b1" for
-    { $alice => { foaf_knows => { a => 'foaf_Person' } } },
-    { $alice => { foaf_knows => { _id => '_:b1', a => 'foaf_Person' } } },
+#    { $alice => { foaf_knows => { a => 'foaf_Person' } } },
+#    { $alice => { foaf_knows => { _id => '_:b1', a => 'foaf_Person' } } },
     { $alice => { foaf_knows => '_:b1' }, '_:b1' => { a => 'foaf_Person' } },
 ;
 

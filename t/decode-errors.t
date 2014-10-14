@@ -30,23 +30,25 @@ check_errors [
 # invalid subjects
     { [] => { a => 'foaf:Person' } }
         => qr{^invalid subject: ARRAY\(},
+    { '<x:subject>' => { a => 'foaf:Person' } } 
+        => qr{^invalid subject},
 
 # invalid predicates        
-    { '<x:subject>' => { \"" => "" } }
+    { 'x:subject' => { \"" => "" } }
         => qr{^invalid predicate IRI SCALAR\(},
 
 # TODO: check different forms of same IRI
 # invalid objects
-    { '<x:subject>' => { a => \"" } }
+    { 'x:subject' => { a => \"" } }
         => qr{^object must not be reference to SCALAR},
-    { '<x:subject>' => { a => [ \"" ] } }
+    { 'x:subject' => { a => [ \"" ] } }
         => qr{^object must not be reference to SCALAR},
 
     { _ns => { 1 => 'http://example.org/' }, 
-      '<x:subject>' => { a => 'foaf:Person' } }
+      'x:subject' => { a => 'foaf:Person' } }
         => qr{^invalid prefix: 1},
     { _ns => { x => 'foo' }, 
-      '<x:subject>' => { a => 'foaf:Person' } }
+      'x:subject' => { a => 'foaf:Person' } }
         => qr{^invalid namespace: foo}
 ];
 

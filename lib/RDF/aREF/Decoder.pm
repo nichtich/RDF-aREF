@@ -103,23 +103,26 @@ sub decode {
         # predicate map    
 
         my $id = $map->{_id};
-        if ($self->is_null($id,'_id')) {
-            return;
-        }
+        return if $self->is_null($id,'_id');
 
         my $subject = $id ne '' ? $self->expect_resource($id,'subject') : undef;
         if (defined $subject and $subject ne '') {
             $self->predicate_map( $subject, $map );
         } elsif ($self->{strict}) { 
-            $self->error("invalid subject: ".(ref $id ? reftype($id) : $id));
+            $self->error("invalid subject", $id);
         }
 
     } else {
-        # subject map
-        
-        for my $key (grep { $_ ne '_ns' } keys %$map) {
-            next if $key eq '' and !$self->{strict};
-            my $subject = $self->expect_resource($key,'subject') // next;
+        # 3.4.1 subject maps
+        foreach my $key (grep { $_ ne '_' and $_ !~ /^_[^:]/ } keys %$map) {
+            next if $self->is_null($key,'subject');
+
+            my $subject = $self->subject($key);
+            if (!$subject) {
+                $self->error("invalid subject", $key);
+                next;
+            }
+
             my $predicates = $map->{$key};
             if (exists $predicates->{_id} and ($self->resource($predicates->{_id}) // '') ne $subject) {
                 $self->error("subject _id must be <$subject>");
@@ -211,9 +214,9 @@ sub expect_resource {
 sub resource {
     my ($self, $r) = @_;
     
-    if (!defined $r) {
-        undef;
-    } elsif ( $r =~ explicitIRIlike ) {
+    return unless defined $r;
+
+    if ( $r =~ explicitIRIlike ) {
         $self->iri($1);
     } elsif ( $r =~ blankNode ) {
         $self->blank_identifier($1);
@@ -222,7 +225,23 @@ sub resource {
     } elsif ( $r =~ IRIlike )  {
         $self->iri($r);
     } else {
-        undef;
+        undef
+    }
+}
+
+sub subject { # plain IRI, qName, or blank node
+    my ($self, $s) = @_;
+
+    return unless defined $s;
+
+    if ( $s =~ IRIlike )  {
+       $self->iri($s);
+    } elsif ( $s =~ qName ) {
+       $self->prefixed_name($1,$2);
+    } elsif ( $s =~ blankNode ) {
+       $self->blank_identifier($1);
+    } else {
+        undef
     }
 }
 
@@ -300,9 +319,13 @@ sub triple {
 }
 
 sub error {
-    my ($self, $message, $node) = @_;
+    my ($self, $message, $value, $context) = @_;
 
-    # TODO: include $node instead of $message (bless $message, 'RDF::aREF::Error')
+    # TODO: include $context (bless $message, 'RDF::aREF::Error')
+
+    if (defined $value) {
+        $message .= ': ' . (ref $value ? reftype $value : $value);
+    }
     
     if (!$self->{complain}) {
         return;

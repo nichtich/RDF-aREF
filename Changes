@@ -1,6 +1,8 @@
 # Changelog for RDF-aREF
 
 {{$NEXT}}
+  - implement aref_query_map (issue #7)
+  - adjust subjects to aREF spec (more strict)
 
 0.17  2014-10-07 13:30:47 CEST
   - fix failure on Perl 5.10
