@@ -121,7 +121,9 @@ RDF::aREF - Another RDF Encoding Form
     decode_aref( $rdf, callback => $model );
     print RDF::Trine::Serializer->new('Turtle')->serialize_model_to_string($model);
 
-    # see RDF::aREF::Encoder for encoding
+    my $model = RDF::Trine::Model->new;
+    RDF::Trine::Parser->parse_url_into_model($url, $model);
+    my $aref = encode_aref $model;
 
 =head1 DESCRIPTION
 
@@ -135,10 +137,15 @@ and for querying parts of an RDF graph (L<RDF::aREF::Query>).
 
 The following functions are exported by default.
 
-=head2 decode_aref( $aref, [ %options ] )
+=head2 decode_aref( $aref [, %options ] )
 
 Decodes an aREF document given as hash reference with L<RDF::aREF::Decoder>.
 Equivalent to C<< RDF::aREF::Decoder->new(%options)->decode($aref) >>.
+
+=head2 encode_aref( $rdf [, %options ] )
+
+Create a new L<RDF::aREF::Encoder> and construct an aREF subject map with
+RDF triples given as L<RDF::Trine::Model> or L<RDF::Trine::Model::Iterator>.
 
 =head2 aref_query( $graph, [ $origin ], $query )
 

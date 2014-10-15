@@ -41,7 +41,9 @@ RDF::aREF - Another RDF Encoding Form
     decode_aref( $rdf, callback => $model );
     print RDF::Trine::Serializer->new('Turtle')->serialize_model_to_string($model);
 
-    # see RDF::aREF::Encoder for encoding
+    my $model = RDF::Trine::Model->new;
+    RDF::Trine::Parser->parse_url_into_model($url, $model);
+    my $aref = encode_aref $model;
 
 # DESCRIPTION
 
@@ -55,10 +57,15 @@ and for querying parts of an RDF graph ([RDF::aREF::Query](https://metacpan.org/
 
 The following functions are exported by default.
 
-## decode\_aref( $aref, \[ %options \] )
+## decode\_aref( $aref \[, %options \] )
 
 Decodes an aREF document given as hash reference with [RDF::aREF::Decoder](https://metacpan.org/pod/RDF::aREF::Decoder).
 Equivalent to `RDF::aREF::Decoder->new(%options)->decode($aref)`.
+
+## encode\_aref( $rdf \[, %options \] )
+
+Create a new [RDF::aREF::Encoder](https://metacpan.org/pod/RDF::aREF::Encoder) and construct an aREF subject map with
+RDF triples given as [RDF::Trine::Model](https://metacpan.org/pod/RDF::Trine::Model) or [RDF::Trine::Model::Iterator](https://metacpan.org/pod/RDF::Trine::Model::Iterator).
 
 ## aref\_query( $graph, \[ $origin \], $query )
 

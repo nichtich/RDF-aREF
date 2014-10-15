@@ -188,7 +188,7 @@ RDF::aREF::Encoder - encode RDF to another RDF Encoding Form
     # method also accepts RDF::Trine::Node instances
     my $object = $encoder->object( RDF::Trine::Resource->new($iri) );
 
-    # encode RDF graphs
+    # encode RDF graphs (see also function 'encode_aref' in RDF::aREF)
     use RDF::Trine::Parser;
     my $aref = { };
     RDF::Trine::Parser->parse_file ( $base_uri, $fh, sub {
