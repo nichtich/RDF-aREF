@@ -1,6 +1,8 @@
 # Changelog for RDF-aREF
 
 {{$NEXT}}
+
+0.19  2014-10-15 14:56:18 CEST
   - added encoding methods
   - removed internal method aref_to_trine_statement (issue #6)
 
