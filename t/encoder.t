@@ -9,7 +9,11 @@ sub test_encoder(@) {
         my $input  = shift @tests;
         my $expect = shift @tests;
         local $Test::Builder::Level = $Test::Builder::Level + 1;
-        is $encoder->$method($input), $expect, $expect;
+        if ( ref $expect ) {
+            is_deeply $encoder->$method($input), $expect, $expect;
+        } else {
+            is $encoder->$method($input), $expect, $expect;
+        }
     }
 }
 
@@ -65,6 +69,19 @@ test_encoder $encoder => 'literal',
 test_encoder $encoder => 'bnode',
     abc => '_:abc'
 ;
+
+test_encoder $encoder => 'rdfjson',
+    {
+      "http://example.org/about" => {
+          "http://purl.org/dc/terms/title" => [ { value => "Anna's Homepage", 
+                                                  type => "literal", 
+                                                  lang => "en" } ] 
+      }
+    } => {
+      "http://example.org/about" => {
+        dct_title => "Anna's Homepage\@en"
+       }
+    };
 
 $encoder = RDF::aREF::Encoder->new( ns => 0 );
 is $encoder->predicate('http://purl.org/dc/terms/title'), 'http://purl.org/dc/terms/title';

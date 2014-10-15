@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use v5.10;
 
-our $VERSION = '0.18';
+our $VERSION = '0.19';
 
 use RDF::NS;
 use Carp qw(croak carp);
@@ -51,7 +51,7 @@ sub new {
         my $model = $callback;
         $callback = sub {
             eval {
-                $model->add_statement( aref_to_trine_statement( @_ ) )
+                $model->add_statement( trine_statement(@_) )
             };
             $self->error($@) if $@;
         };
@@ -175,7 +175,7 @@ sub predicate_map {
 
                 $self->triple( $subject, $predicate, [$object] );
 
-                unless( $self->{visited}{refaddr $object} ) {
+                unless( ref $object and $self->{visited}{refaddr $object} ) {
                     $self->predicate_map( $object, $o );
                 }
             } else {
@@ -357,7 +357,7 @@ sub blank_identifier {
 }
  
 # TODO: test this
-sub aref_to_trine_statement {
+sub trine_statement {
     RDF::Trine::Statement->new(
         # subject
         (substr($_[0],0,2) eq '_:' ? RDF::Trine::Node::Blank->new(substr $_[0], 2)

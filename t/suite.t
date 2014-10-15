@@ -20,7 +20,12 @@ sub slurp {
     $data;
 }
 
-use RDF::aREF qw(decode_aref aref_to_trine_statement);
+use RDF::aREF qw(decode_aref);
+use RDF::aREF::Decoder;
+
+sub trine_statement { # TODO: remove/modify this method
+    RDF::aREF::Decoder::trine_statement(@_);
+}
 
 foreach my $file (sort <t/suite/*.json>) {
     $file =~ s/\.json$//;
@@ -36,14 +41,14 @@ foreach my $file (sort <t/suite/*.json>) {
     $model->begin_bulk_ops;
     my $decoder = RDF::aREF::Decoder->new(
         callback => sub {
-            $model->add_statement( aref_to_trine_statement( @_ ) ) 
+            $model->add_statement( trine_statement( @_ ) ) 
         }, 
         complain => 2,
         strict => ($file =~ /strict/ ? 1 : 0),
     );
     eval { $decoder->decode($aref) };
     if ($err) {
-        is $@, $err." at t/suite.t line 44.\n", "$name.err";
+        is $@, $err." at t/suite.t line 49.\n", "$name.err";
     } else {
         $model->end_bulk_ops;
         my $got = RDF::Trine::Serializer::NTriples::Canonical->new(

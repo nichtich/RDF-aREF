@@ -41,6 +41,8 @@ RDF::aREF - Another RDF Encoding Form
     decode_aref( $rdf, callback => $model );
     print RDF::Trine::Serializer->new('Turtle')->serialize_model_to_string($model);
 
+    # see RDF::aREF::Encoder for encoding
+
 # DESCRIPTION
 
 **aREF** ([another RDF Encoding Form](http://gbv.github.io/aREF/)) is an

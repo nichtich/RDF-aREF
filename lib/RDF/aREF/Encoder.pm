@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use v5.10;
 
-our $VERSION = '0.18';
+our $VERSION = '0.19';
 
 use RDF::NS;
 use Scalar::Util qw(blessed reftype);
@@ -99,6 +99,66 @@ sub bnode {
     '_:'.$_[1]
 }
 
+sub rdfjson {
+    my ($self, $hashref) = @_;
+
+    my $aref = { };
+    while (my ($s,$ps) = each %$hashref) {
+        foreach my $p (keys %$ps) {
+            $self->add_objects(
+                $aref->{ $s } //= { }, # TODO $self->subject($s)
+                $p,
+                $hashref->{$s}->{$p}
+            )
+        }
+    }
+
+    $aref;
+}
+
+sub add_objects {
+    my ($self, $map, $predicate, $objects) = @_;
+    $predicate = $self->predicate($predicate);
+
+    return unless @$objects;
+    my @objects = map { $self->object($_) } @$objects;
+
+    if (ref $map->{$predicate}) {
+        push @{$map->{$predicate}}, @objects;
+    } elsif ($map->{$predicate}) {
+        unshift @objects, $map->{$predicate};
+        $map->{$predicate} = \@objects;
+    } else {
+        $map->{$predicate} = @objects > 1 ? \@objects : $objects[0];
+    }
+}
+
+sub add_triple {
+    my $self = shift;
+    my $aref = shift;
+
+    my ($subject, $predicate, $object) = @_; # TODO: support callback format
+
+    if (@_ == 1) { # RDF::Trine::Statement
+        $subject   = $_[0]->subject->is_blank ? $_[0]->subject->sse 
+                                              : $_[0]->subject->uri_value;
+        $predicate = $_[0]->predicate->uri_value;
+        $object    = $_[0]->object;
+    }
+
+    # TODO: support predicate maps
+    # TODO: create new bnode identifiers, if requested
+    my $map = ($aref->{ $subject } //= { }); # TODO: $self->subject($s);
+    $self->add_objects( $map, $predicate, [$object] );
+}
+
+sub add_iterator {
+    my ($self, $aref, $iterator) = @_;    
+    while (my $statement = $iterator->next) {
+        $self->add_triple($aref, $statement);
+    }
+}
+
 1;
 __END__
 
@@ -111,6 +171,8 @@ RDF::aREF::Encoder - encode RDF to another RDF Encoding Form
     use RDF::aREF::Encoder;
     my $encoder = RDF::aREF::Encoder->new;
     
+    # encode parts of aREF
+
     my $qname  = $encoder->qname('http://schema.org/Review'); # 'schema_Review'
 
     my $predicate = $encoder->predicate(
@@ -125,6 +187,13 @@ RDF::aREF::Encoder - encode RDF to another RDF Encoding Form
 
     # method also accepts RDF::Trine::Node instances
     my $object = $encoder->object( RDF::Trine::Resource->new($iri) );
+
+    # encode RDF graphs
+    use RDF::Trine::Parser;
+    my $aref = { };
+    RDF::Trine::Parser->parse_file ( $base_uri, $fh, sub {
+        $encoder->add_triple( $aref, $_[0] );
+    } );
 
 =head1 DESCRIPTION
 
@@ -144,7 +213,7 @@ required namespace mappings (rdf, rdfs, owl and xsd).
 =head1 METHODS
 
 Note that no syntax checking is applied, e.g. whether a given URI is a valid
-URI or whether a given language is a valid language tag.
+URI or whether a given language is a valid language tag!
 
 =head2 qname( $uri )
 
@@ -172,7 +241,7 @@ Encode a blank node by prepending "C<_:>" to its identifier.
 
 Encode an RDF object given either as hash reference as defined in
 L<RDF/JSON|http://www.w3.org/TR/rdf-json/> format (see also method
-C<as_hashref> of L<RDF::Trine::Iterator::Graph>), or in array reference as
+C<as_hashref> of L<RDF::Trine::Model>), or in array reference as
 internally used by L<RDF::Trine>.
 
 A hash reference is expected to have the following fields:
@@ -215,6 +284,29 @@ two elements "C<URI>" and the URI for URI nodes,
 two elements "C<BLANK>" and the blank node identifier for blank nodes.
 
 =back
+
+=head2 rdfjson( $rdf )
+
+Encode RDF given in L<RDF/JSON|http://www.w3.org/TR/rdf-json/> format (as
+returned by method C<as_hashref> in L<RDF::Trine::Model>).
+
+experimental.
+
+=head2 add_triple( $aref, $statement )
+
+Add a L<RDF::Trine::Stament> to an aREF subject map.
+
+experimental.
+
+=head2 add_iterator( $aref, $iterator )
+
+Add a L<RDF::Trine::Iterator> to an aREF subject map.
+
+experimental.
+
+=head2 add_objects( $predicate_map, $predicate, $objects )
+
+experimental.
 
 =head1 SEE ALSO
 

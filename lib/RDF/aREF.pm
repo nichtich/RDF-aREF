@@ -3,20 +3,37 @@ use strict;
 use warnings;
 use v5.10;
 
-our $VERSION = '0.18';
+our $VERSION = '0.19';
 
 use RDF::aREF::Query;
+use RDF::aREF::Decoder;
+use RDF::aREF::Encoder;
 use Scalar::Util qw(blessed);
 use Carp qw(croak);
 
 use parent 'Exporter';
-our @EXPORT = qw(decode_aref aref_query aref_query_map);
-our @EXPORT_OK = qw(aref_to_trine_statement);
-our %EXPORT_TAGS = (all => [@EXPORT, @EXPORT_OK]);
+our @EXPORT = qw(decode_aref encode_aref aref_query aref_query_map);
+our %EXPORT_TAGS = (all => [@EXPORT]);
 
 sub decode_aref(@) { ## no critic
     my ($aref, %options) = @_;
     RDF::aREF::Decoder->new(%options)->decode($aref);
+}
+
+sub encode_aref(@) { ## no critic
+    my ($source, %options) = @_;
+    my $encoder = RDF::aREF::Encoder->new(%options);
+    my $aref = {};
+
+    if (blessed $source and $source->isa('RDF::Trine::Iterator')) {
+        $encoder->add_iterator( $aref, $source );
+    } elsif (blessed $source and $source->isa('RDF::Trine::Model')) {
+        $encoder->add_iterator( $aref, $source->as_stream );
+    }
+    
+    # TODO: encode hashref or callback code reference
+    
+    return $aref;
 }
 
 sub aref_query {
@@ -52,12 +69,6 @@ sub aref_query_map {
     }
 
     \%record;
-}
-
-# FIXME: this is undocumented but used by Catmandu::RDF. Remove?
-sub aref_to_trine_statement {
-    # warn 'RDF::aREF::aref_to_trine_statement will be removed!';
-    RDF::aREF::Decoder::aref_to_trine_statement(@_);
 }
 
 1;
@@ -109,6 +120,8 @@ RDF::aREF - Another RDF Encoding Form
     my $model = RDF::Trine::Model->new;
     decode_aref( $rdf, callback => $model );
     print RDF::Trine::Serializer->new('Turtle')->serialize_model_to_string($model);
+
+    # see RDF::aREF::Encoder for encoding
 
 =head1 DESCRIPTION
 
