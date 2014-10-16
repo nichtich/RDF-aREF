@@ -4,6 +4,7 @@ use warnings;
 
 use RDF::aREF qw(aref_query aref_query_map);
 use RDF::aREF::Query;
+use Scalar::Util qw(reftype);
 
 BEGIN {
     eval { require JSON; 1; } 
@@ -12,6 +13,13 @@ BEGIN {
 
 my $rdf = JSON::from_json(do { local (@ARGV, $/) = "t/doi-example.json"; <> });
 my $uri = "http://dx.doi.org/10.2474/trol.7.147";
+
+my @res = aref_query($rdf, $uri, '.');
+is reftype $res[0], 'HASH';
+
+# FIXME:
+# is_deeply [ aref_query($rdf, $uri, '@') ], [ ], 'empty query (@)';
+is_deeply [ aref_query($rdf, $uri, '') ], [ $uri ], 'empty query';
 
 is_deeply [ aref_query($rdf, $uri, 'dct_title') ], 
     ['Frictional Coefficient under Banana Skin'], 'dct_title';

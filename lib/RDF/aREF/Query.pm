@@ -12,7 +12,7 @@ use RDF::NS;
 sub new {
     my ($class, %options) = @_;
 
-    my $expr    = $options{query} or croak "query required";
+    my $expr    = $options{query} // croak "query required";
     my $ns      = $options{ns} // RDF::NS->new;
     my $decoder = $options{decoder} // RDF::aREF::Decoder->new( ns => $ns );
 
@@ -79,6 +79,11 @@ sub apply {
     my @current = ($subject ? $rdf->{$subject} : $rdf); # TODO: for predicate map
 
     my @path = @{$self->{path}};
+    if (!@path and $self->{type} ne 'resource') {
+        if ($self->{type} eq 'any') {
+            return ($subject ? $subject : $rdf->{_id});
+        }
+    }
 
     while (my $field = shift @path) {
 
@@ -98,24 +103,24 @@ sub apply {
                 # TODO: only if RDF given as predicate map!
                 @current = grep { defined } map { $rdf->{$_} } @current;
             }
-
-        } else { # last path element
-            @current = grep { defined } map { $decoder->object($_) } @current;
-
-            if ($self->{type} eq 'literal') {
-                @current = grep { @$_ > 1 } @current;
-
-                if ($self->{language}) { # TODO: use language tag substring
-                    @current = grep { $_->[1] and $_->[1] eq $self->{language} } 
-                               @current; 
-                } elsif ($self->{datatype}) { # TODO: support qName and explicit IRI
-                    @current = grep { $_->[2] and $_->[2] eq $self->{datatype} } @current; 
-                }
-            }
-
-            @current = map { $_->[0] } @current; # IRI or string value
         }
     }
+
+    # last path element
+    @current = grep { defined } map { $decoder->object($_) } @current;
+
+    if ($self->{type} eq 'literal') {
+        @current = grep { @$_ > 1 } @current;
+
+        if ($self->{language}) { # TODO: use language tag substring
+            @current = grep { $_->[1] and $_->[1] eq $self->{language} } 
+                       @current; 
+        } elsif ($self->{datatype}) { # TODO: support qName and explicit IRI
+            @current = grep { $_->[2] and $_->[2] eq $self->{datatype} } @current; 
+        }
+    }
+
+    @current = map { $_->[0] } @current; # IRI or string value
 
     return @current;
 }

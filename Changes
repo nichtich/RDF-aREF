@@ -1,6 +1,7 @@
 # Changelog for RDF-aREF
 
 {{$NEXT}}
+  - support empty queries
   - fix bug for literal nodes without language tags in encoder
   - new encoder method add_hashref
 
