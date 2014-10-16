@@ -64,8 +64,12 @@ Equivalent to `RDF::aREF::Decoder->new(%options)->decode($aref)`.
 
 ## encode\_aref( $rdf \[, %options \] )
 
-Create a new [RDF::aREF::Encoder](https://metacpan.org/pod/RDF::aREF::Encoder) and construct an aREF subject map with
-RDF triples given as [RDF::Trine::Model](https://metacpan.org/pod/RDF::Trine::Model) or [RDF::Trine::Model::Iterator](https://metacpan.org/pod/RDF::Trine::Model::Iterator).
+Create a new [RDF::aREF::Encoder](https://metacpan.org/pod/RDF::aREF::Encoder) and construct an aREF subject map with RDF
+triples given as [RDF::Trine::Model](https://metacpan.org/pod/RDF::Trine::Model), as [RDF::Trine::Model::Iterator](https://metacpan.org/pod/RDF::Trine::Model::Iterator) or as
+hash reference with [RDF/JSON](http://www.w3.org/TR/rdf-json/) format, as
+returned by method `as_hashref` in [RDF::Trine::Model](https://metacpan.org/pod/RDF::Trine::Model).
+
+_experimental_
 
 ## aref\_query( $graph, \[ $origin \], $query )
 

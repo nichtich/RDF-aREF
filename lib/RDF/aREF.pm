@@ -3,12 +3,12 @@ use strict;
 use warnings;
 use v5.10;
 
-our $VERSION = '0.19';
+our $VERSION = '0.20';
 
 use RDF::aREF::Query;
 use RDF::aREF::Decoder;
 use RDF::aREF::Encoder;
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed reftype);
 use Carp qw(croak);
 
 use parent 'Exporter';
@@ -29,9 +29,9 @@ sub encode_aref(@) { ## no critic
         $encoder->add_iterator( $aref, $source );
     } elsif (blessed $source and $source->isa('RDF::Trine::Model')) {
         $encoder->add_iterator( $aref, $source->as_stream );
-    }
-    
-    # TODO: encode hashref or callback code reference
+    } elsif (ref $source and reftype $source eq 'HASH') {
+        $encoder->add_hashref( $aref, $source );
+    } # TODO: add via callback with code reference
     
     return $aref;
 }
@@ -144,8 +144,12 @@ Equivalent to C<< RDF::aREF::Decoder->new(%options)->decode($aref) >>.
 
 =head2 encode_aref( $rdf [, %options ] )
 
-Create a new L<RDF::aREF::Encoder> and construct an aREF subject map with
-RDF triples given as L<RDF::Trine::Model> or L<RDF::Trine::Model::Iterator>.
+Create a new L<RDF::aREF::Encoder> and construct an aREF subject map with RDF
+triples given as L<RDF::Trine::Model>, as L<RDF::Trine::Model::Iterator> or as
+hash reference with L<RDF/JSON|http://www.w3.org/TR/rdf-json/> format, as
+returned by method C<as_hashref> in L<RDF::Trine::Model>.
+
+I<experimental>
 
 =head2 aref_query( $graph, [ $origin ], $query )
 

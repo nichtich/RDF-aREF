@@ -1,6 +1,8 @@
 # Changelog for RDF-aREF
 
 {{$NEXT}}
+  - fix bug for literal nodes without language tags in encoder
+  - new encoder method add_hashref
 
 0.19  2014-10-15 14:56:18 CEST
   - added encoding methods

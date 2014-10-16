@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use v5.10;
 
-our $VERSION = '0.19';
+our $VERSION = '0.20';
 
 use RDF::NS;
 use Scalar::Util qw(blessed reftype);
@@ -70,7 +70,7 @@ sub object {
             $self->uri($object->{value})
         }
     } elsif (reftype $object eq 'ARRAY') {
-        if (@$object == 3) {
+        if (@$object != 2 ) {
             $self->literal(@$object)
         } elsif ($object->[0] eq 'URI') {
             $self->uri("".$object->[1])
@@ -97,23 +97,6 @@ sub literal {
 
 sub bnode {
     '_:'.$_[1]
-}
-
-sub rdfjson {
-    my ($self, $hashref) = @_;
-
-    my $aref = { };
-    while (my ($s,$ps) = each %$hashref) {
-        foreach my $p (keys %$ps) {
-            $self->add_objects(
-                $aref->{ $s } //= { }, # TODO $self->subject($s)
-                $p,
-                $hashref->{$s}->{$p}
-            )
-        }
-    }
-
-    $aref;
 }
 
 sub add_objects {
@@ -157,6 +140,21 @@ sub add_iterator {
     while (my $statement = $iterator->next) {
         $self->add_triple($aref, $statement);
     }
+}
+
+sub add_hashref {
+    my ($self, $aref, $hashref) = @_;
+
+    while (my ($s,$ps) = each %$hashref) {
+        foreach my $p (keys %$ps) {
+            $self->add_objects(
+                $aref->{ $s } //= { }, # TODO $self->subject($s)
+                $p,
+                $hashref->{$s}->{$p}
+            )
+        }
+    }
+
 }
 
 1;
@@ -285,28 +283,28 @@ two elements "C<BLANK>" and the blank node identifier for blank nodes.
 
 =back
 
-=head2 rdfjson( $rdf )
-
-Encode RDF given in L<RDF/JSON|http://www.w3.org/TR/rdf-json/> format (as
-returned by method C<as_hashref> in L<RDF::Trine::Model>).
-
-experimental.
-
 =head2 add_triple( $aref, $statement )
 
 Add a L<RDF::Trine::Stament> to an aREF subject map.
 
-experimental.
+I<experimental>
 
 =head2 add_iterator( $aref, $iterator )
 
 Add a L<RDF::Trine::Iterator> to an aREF subject map.
 
-experimental.
+I<experimental>
 
 =head2 add_objects( $predicate_map, $predicate, $objects )
 
-experimental.
+I<experimental>
+
+=head2 add_hashref( $aref, $rdf )
+
+Add RDF given in L<RDF/JSON|http://www.w3.org/TR/rdf-json/> format (as returned
+by method C<as_hashref> in L<RDF::Trine::Model>).
+
+I<experimental>
 
 =head1 SEE ALSO
 

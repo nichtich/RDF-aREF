@@ -1,7 +1,7 @@
 requires 'perl', '5.10.0';
 requires 'RDF::NS', '20140910';
 
-suggests 'RDF::Trine';
+suggests 'RDF::Trine', '1.010';
 
 test_requires 'JSON';
 test_requires 'RDF::Trine';

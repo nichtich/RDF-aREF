@@ -41,7 +41,7 @@
             "perl" : "v5.10.0"
          },
          "suggests" : {
-            "RDF::Trine" : "0"
+            "RDF::Trine" : "1.010"
          }
       },
       "test" : {
@@ -63,7 +63,7 @@
          "web" : "https://github.com/nichtich/RDF-aREF"
       }
    },
-   "version" : "0.19",
+   "version" : "0.20",
    "x_contributors" : [
       "Jakob Voss <jakob@nichtich.de>",
       "Jakob Voss <voss@gbv.de>"

@@ -59,6 +59,7 @@ test_encoder $encoder => 'object',
     ['URI','http://www.w3.org/1999/02/22-rdf-syntax-ns#type'] => 'rdf_type',
     ['BLANK', 0 ] => '_:0',
     ['hello, world!', 'en', undef ] => 'hello, world!@en',
+    ['hello, world!' ] => 'hello, world!@',
     [42, undef, 'http://www.w3.org/2001/XMLSchema#integer'] => '42^xs_integer',
 ;
 
@@ -70,22 +71,12 @@ test_encoder $encoder => 'bnode',
     abc => '_:abc'
 ;
 
-test_encoder $encoder => 'rdfjson',
-    {
-      "http://example.org/about" => {
-          "http://purl.org/dc/terms/title" => [ { value => "Anna's Homepage", 
-                                                  type => "literal", 
-                                                  lang => "en" } ] 
-      }
-    } => {
-      "http://example.org/about" => {
-        dct_title => "Anna's Homepage\@en"
-       }
-    };
-
 $encoder = RDF::aREF::Encoder->new( ns => 0 );
-is $encoder->predicate('http://purl.org/dc/terms/title'), 'http://purl.org/dc/terms/title';
-is $encoder->qname('http://www.w3.org/1999/02/22-rdf-syntax-ns#type'), 'rdf_type';
-is $encoder->literal( 42, undef, 'http://www.w3.org/2001/XMLSchema#integer'), '42^xsd_integer';
+is $encoder->predicate('http://purl.org/dc/terms/title'), 
+    'http://purl.org/dc/terms/title', 'predicate (ns=0)';
+is $encoder->qname('http://www.w3.org/1999/02/22-rdf-syntax-ns#type'),
+    'rdf_type', 'qname (ns=0)';
+is $encoder->literal( 42, undef, 'http://www.w3.org/2001/XMLSchema#integer'), 
+    '42^xsd_integer', 'literal (ns=0)';
 
 done_testing;

@@ -88,4 +88,6 @@ is_deeply $aref, {
     }
 }, 'encoder add_triple';
 
+# TODO encode_aref $model / $iterator
+
 done_testing;

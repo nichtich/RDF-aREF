@@ -67,6 +67,7 @@ sub namespace_map { # sets the local namespace map
     # TODO: copy on write because this is expensive!
     
     # copy default namespace map
+    # TODO: respect '_' and default map!
     my $ns = ref $self->{ns} 
         ? bless { %{$self->{ns}} }, 'RDF::NS'
         : RDF::NS->new($self->{ns});
