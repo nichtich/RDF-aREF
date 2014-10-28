@@ -1,6 +1,8 @@
 # Changelog for RDF-aREF
 
 {{$NEXT}}
+
+0.21  2014-10-28 14:08:40 CET
   - allow 'a' in aREF query expressions
   - experimental support to encode from URL
   - support multiple queries in aref_query
