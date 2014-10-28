@@ -48,7 +48,9 @@ foreach my $file (sort <t/suite/*.json>) {
     );
     eval { $decoder->decode($aref) };
     if ($err) {
-        is $@, $err." at t/suite.t line 49.\n", "$name.err";
+        my $got = $@;
+        $got =~ s{ at t/suite\.t line \d+[.]?\n}{};
+        is $got, $err, "$name.err";
     } else {
         $model->end_bulk_ops;
         my $got = RDF::Trine::Serializer::NTriples::Canonical->new(
