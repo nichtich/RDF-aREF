@@ -45,6 +45,9 @@ is_deeply [ aref_query($rdf->{$uri}, 'dct_date') ], ["2012"], 'dct_date';
 is_deeply [ aref_query($rdf->{$uri}, 'dct_date^xsd_gYear') ], ["2012"], 'dct_date^xsd_gYear';
 is_deeply [ aref_query($rdf->{$uri}, 'dct_date^xsd_foo') ], [], 'dct_date^xsd_foo';
 
+is_deeply [ aref_query($rdf, $uri, 'dct_creator.a') ], 
+          [ map { 'http://xmlns.com/foaf/0.1/Person' } 1..4 ], 'a is a valid property';
+
 foreach my $query (qw(dct_creator dct_creator.)) {
     is_deeply [ sort (aref_query($rdf, $uri, $query)) ], [
         "http://id.crossref.org/contributor/daichi-uchijima-y2ol1uygjx72",

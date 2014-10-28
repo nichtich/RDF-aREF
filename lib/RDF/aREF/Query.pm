@@ -42,7 +42,7 @@ sub new {
 
     my @path = split /\./, $expr;
     foreach (@path) {
-        croak "invalid aref path expression" if $_ !~ qName;
+        croak "invalid aref path expression" if $_ !~ qName and $_ ne 'a';
     }
 
     bless {

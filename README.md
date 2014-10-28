@@ -35,7 +35,7 @@ RDF::aREF - Another RDF Encoding Form
         }
     );
     
-    my @lastmod = aref_query( $rdf, 'foaf_homepage.dct_modified^' );
+    my @lastmod = aref_query $rdf, 'foaf_homepage.dct_modified^';
 
     my $model = RDF::Trine::Model->new;
     decode_aref( $rdf, callback => $model );
@@ -57,23 +57,29 @@ and for querying parts of an RDF graph ([RDF::aREF::Query](https://metacpan.org/
 
 The following functions are exported by default.
 
-## decode\_aref( $aref \[, %options \] )
+## decode\_aref $aref \[, %options \]
 
 Decodes an aREF document given as hash reference with [RDF::aREF::Decoder](https://metacpan.org/pod/RDF::aREF::Decoder).
 Equivalent to `RDF::aREF::Decoder->new(%options)->decode($aref)`.
 
-## encode\_aref( $rdf \[, %options \] )
+## encode\_aref $graph \[, %options \]
 
-Create a new [RDF::aREF::Encoder](https://metacpan.org/pod/RDF::aREF::Encoder) and construct an aREF subject map with RDF
-triples given as [RDF::Trine::Model](https://metacpan.org/pod/RDF::Trine::Model), as [RDF::Trine::Model::Iterator](https://metacpan.org/pod/RDF::Trine::Model::Iterator) or as
-hash reference with [RDF/JSON](http://www.w3.org/TR/rdf-json/) format, as
-returned by method `as_hashref` in [RDF::Trine::Model](https://metacpan.org/pod/RDF::Trine::Model).
+Construct an aREF subject map (using a new [RDF::aREF::Encoder](https://metacpan.org/pod/RDF::aREF::Encoder)) fron an RDF
+graph. The graph can be supplied as:
 
-_experimental_
+- instance of [RDF::Trine::Model](https://metacpan.org/pod/RDF::Trine::Model)
+- instance of [RDF::Trine::Model::Iterator](https://metacpan.org/pod/RDF::Trine::Model::Iterator)
+- an URL (experimental and only if RDF::Trine is installed)
+- instance of [Attean::API::TripleIterator](https://metacpan.org/pod/Attean::API::TripleIterator) (experimental)
+- instance of [Attean::API::TripleStore](https://metacpan.org/pod/Attean::API::TripleStore) (experimental)
+- hash reference with [RDF/JSON](http://www.w3.org/TR/rdf-json/) format (as
+returned by method `as_hashref` in [RDF::Trine::Model](https://metacpan.org/pod/RDF::Trine::Model))
 
-## aref\_query( $graph, \[ $origin \], $query )
+## aref\_query $graph, \[ $origin \], @queries
 
-Query parts of an aREF data structure. See [RDF::aREF::Query](https://metacpan.org/pod/RDF::aREF::Query) for details.
+Query parts of an aREF data structure by [aREF query
+expressions](http://gbv.github.io/aREF/aREF.html#aref-query) and return a list.
+See [RDF::aREF::Query](https://metacpan.org/pod/RDF::aREF::Query) for details.
 
 ## aref\_query\_map( $graph, \[ $origin \], $query\_map )
 
