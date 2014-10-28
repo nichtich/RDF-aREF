@@ -36,14 +36,12 @@ sub encode_aref(@) { ## no critic
     return $aref;
 }
 
-sub aref_query {
-    my ($graph, $origin, $query) = @_ < 3 ? ($_[0], undef, $_[1]) : @_;
+sub aref_query(@) { ## no critic
+    my ($graph, $origin, @queries) = @_ < 3 ? ($_[0], undef, $_[1]) : @_;
 
-    unless( blessed $query and $query->isa('RDF::aREF::Query') ) {
-        $query = RDF::aREF::Query->new( query => $query );
-    }
-
-    $query->apply($graph, $origin);
+    map { $_->apply($graph, $origin) }
+    map { (blessed $_ and $_->isa('RDF::aREF::Query')) 
+          ? $_ : RDF::aREF::Query->new( query => $_ ) } @queries;
 }
 
 
@@ -115,7 +113,7 @@ RDF::aREF - Another RDF Encoding Form
         }
     );
     
-    my @lastmod = aref_query( $rdf, 'foaf_homepage.dct_modified^' );
+    my @lastmod = aref_query $rdf, 'foaf_homepage.dct_modified^';
 
     my $model = RDF::Trine::Model->new;
     decode_aref( $rdf, callback => $model );
@@ -151,9 +149,11 @@ returned by method C<as_hashref> in L<RDF::Trine::Model>.
 
 I<experimental>
 
-=head2 aref_query( $graph, [ $origin ], $query )
+=head2 aref_query $graph, [ $origin ], @queries
 
-Query parts of an aREF data structure. See L<RDF::aREF::Query> for details.
+Query parts of an aREF data structure by L<aREF query
+expressions|http://gbv.github.io/aREF/aREF.html#aref-query> and return a list.
+See L<RDF::aREF::Query> for details.
 
 =head2 aref_query_map( $graph, [ $origin ], $query_map )
 

@@ -68,6 +68,9 @@ while ( my ($query, $count) = each %names ) {
     is scalar @names, $count, $query;
 }
 
+is scalar @{[ aref_query( $rdf, $uri, 
+    qw(dct_creator. schema_author. dct_publisher.)) ]}, 5, 'multiple queries';
+
 foreach my $query ( "dct_title@#", "dct_date^_" ) {
     eval { RDF::Query->new($query) };
     ok $@, 'error in aREF query';

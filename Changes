@@ -1,6 +1,7 @@
 # Changelog for RDF-aREF
 
 {{$NEXT}}
+  - support multiple queries in aref_query
 
 0.20  2014-10-16 12:09:05 CEST
   - support empty queries
