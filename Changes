@@ -1,6 +1,7 @@
 # Changelog for RDF-aREF
 
 {{$NEXT}}
+  - experimental support to encode from URL
   - support multiple queries in aref_query
 
 0.20  2014-10-16 12:09:05 CEST

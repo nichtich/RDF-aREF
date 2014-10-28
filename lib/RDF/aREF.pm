@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use v5.10;
 
-our $VERSION = '0.20';
+our $VERSION = '0.21';
 
 use RDF::aREF::Query;
 use RDF::aREF::Decoder;
@@ -27,8 +27,20 @@ sub encode_aref(@) { ## no critic
 
     if (blessed $source and $source->isa('RDF::Trine::Iterator')) {
         $encoder->add_iterator( $aref, $source );
+    } elsif (blessed $source and $source->DOES('Attean::API::TripleIterator')) {
+        $encoder->add_iterator( $aref, $source );
     } elsif (blessed $source and $source->isa('RDF::Trine::Model')) {
         $encoder->add_iterator( $aref, $source->as_stream );
+    } elsif (blessed $source and $source->DOES('Attean::API::TripleStore')) {
+        $encoder->add_iterator( $aref, $source->get_triples );
+    } elsif (!ref $source and $source =~ qr{^https?://}) {
+       if (eval { require RDF::Trine::Model; require RDF::Trine::Parser; 1 }) {
+            my $model = RDF::Trine::Model->new;
+            RDF::Trine::Parser->parse_url_into_model($source, $model); # TODO: use iterator
+            $encoder->add_iterator( $aref, $model->as_stream );
+       } else {
+           croak "encoding aREF from URL not supported. Install RDF::Trine or Attean!";
+       }
     } elsif (ref $source and reftype $source eq 'HASH') {
         $encoder->add_hashref( $aref, $source );
     } # TODO: add via callback with code reference
@@ -135,19 +147,44 @@ and for querying parts of an RDF graph (L<RDF::aREF::Query>).
 
 The following functions are exported by default.
 
-=head2 decode_aref( $aref [, %options ] )
+=head2 decode_aref $aref [, %options ]
 
 Decodes an aREF document given as hash reference with L<RDF::aREF::Decoder>.
 Equivalent to C<< RDF::aREF::Decoder->new(%options)->decode($aref) >>.
 
-=head2 encode_aref( $rdf [, %options ] )
+=head2 encode_aref $graph [, %options ]
 
-Create a new L<RDF::aREF::Encoder> and construct an aREF subject map with RDF
-triples given as L<RDF::Trine::Model>, as L<RDF::Trine::Model::Iterator> or as
-hash reference with L<RDF/JSON|http://www.w3.org/TR/rdf-json/> format, as
-returned by method C<as_hashref> in L<RDF::Trine::Model>.
+Construct an aREF subject map (using a new L<RDF::aREF::Encoder>) fron an RDF
+graph. The graph can be supplied as:
 
-I<experimental>
+=over
+
+=item 
+
+instance of L<RDF::Trine::Model>
+
+=item
+
+instance of L<RDF::Trine::Model::Iterator>
+
+=item 
+
+an URL (experimental and only if RDF::Trine is installed)
+
+=item
+
+instance of L<Attean::API::TripleIterator> (experimental)
+
+=item
+
+instance of L<Attean::API::TripleStore> (experimental)
+
+=item
+
+hash reference with L<RDF/JSON|http://www.w3.org/TR/rdf-json/> format (as
+returned by method C<as_hashref> in L<RDF::Trine::Model>)
+
+=back
 
 =head2 aref_query $graph, [ $origin ], @queries
 
