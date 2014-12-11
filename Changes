@@ -3,6 +3,7 @@
 {{$NEXT}}
   - modified encoder, added subject and triple method
   - remove or hide some exerimental methods
+  - avoid malformed bnode identifiers
 
 0.21  2014-10-28 14:08:40 CET
   - allow 'a' in aREF query expressions

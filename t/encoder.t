@@ -26,6 +26,10 @@ test_encoder $encoder => 'subject',
         type => 'uri',
         value => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'
     } => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+    {
+        type => 'bnode',
+        value => '_:foo'
+    } => '_:foo',
     # RDF::Trine
     ['URI','http://www.w3.org/1999/02/22-rdf-syntax-ns#type'] 
       => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
@@ -100,8 +104,9 @@ test_encoder $encoder => 'literal',
 
 # RDF::aREF::Encoder::bnode( ... )
 test_encoder $encoder => 'bnode',
-    abc => '_:abc',
-    0   => '_:0',
+    abc   => '_:abc',
+    0     => '_:0',
+    '_:0' => undef,
 ;
 
 # RDF::aREF::Encoder::qname( ... )

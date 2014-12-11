@@ -10,8 +10,8 @@ use Carp qw(croak carp);
 use Scalar::Util qw(refaddr reftype blessed);
 
 use parent 'Exporter'; 
-our @EXPORT_OK = qw(prefix localName qName blankNode IRIlike languageString 
-    languageTag datatypeString);
+our @EXPORT_OK = qw(prefix localName qName blankNode blankNodeIdentifier
+                    IRIlike languageString languageTag datatypeString);
 
 our ($PREFIX, $NAME);
 BEGIN {
@@ -24,6 +24,7 @@ BEGIN {
 use constant localName      => qr/^$NAME$/;
 use constant prefix         => qr/^$PREFIX$/;
 use constant qName          => qr/^($PREFIX)_($NAME)$/;
+use constant blankNodeIdentifier => qr/^([a-zA-Z0-9]+)$/;
 use constant blankNode      => qr/^_:([a-zA-Z0-9]+)$/;
 use constant IRIlike        => qr/^[a-z][a-z0-9+.-]*:/;
 use constant languageString => qr/^(.*)@([a-z]{2,8}(-[a-z0-9]{1,8})*)$/i;

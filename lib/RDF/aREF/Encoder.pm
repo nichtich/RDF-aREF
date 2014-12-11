@@ -6,7 +6,7 @@ use v5.10;
 our $VERSION = '0.22';
 
 use RDF::NS;
-use RDF::aREF::Decoder qw(localName);
+use RDF::aREF::Decoder qw(localName blankNodeIdentifier);
 use Scalar::Util qw(blessed reftype);
 
 sub new {
@@ -143,7 +143,7 @@ sub literal {
 }
 
 sub bnode {
-    '_:'.$_[1]
+    $_[1] =~ blankNodeIdentifier ? '_:'.$_[1] : undef;
 }
 
 sub triple {
@@ -210,7 +210,7 @@ sub add_hashref {
     my ($self, $hashref, $aref) = @_;
  
     while (my ($s,$ps) = each %$hashref) {
-        my $subject = $s =~ /^_:/ ? ['BLANK',$s] : ['URI',$s];
+        my $subject = $s =~ /^_:/ ? ['BLANK',substr($s, 2)] : ['URI',$s];
         foreach my $p (keys %$ps) {
             my $predicate = ['URI',$p];
             foreach my $object (@{ $hashref->{$s}->{$p} }) {
