@@ -18,28 +18,33 @@ my $model = RDF::Trine::Model->new;
 decode_aref( {
         _id => 'http://example.org/alice',
         a => 'foaf_Person',
-        foaf_knowns => 'http://example.org/bob'
+        foaf_knows => 'http://example.org/bob'
     }, 
     callback => $model,
 );
 is $model->size, 2, 'added two statements';
 
 my $aref = encode_aref $model;
-is_deeply $aref, {
-       'http://example.org/alice' => {
-         'a' => 'foaf_Person',
-         'foaf_knowns' => '<http://example.org/bob>'
-       }
-    }, 'encode_aref from RDF::Trine::Model';
-
-decode_aref( {
+is_deeply $aref,  {
         _id => 'http://example.org/alice',
         a => 'foaf_Person',
-        foaf_knowns => 'http://example.org/claire'
-    },
-    callback => $model,
-);
+        foaf_knows => '<http://example.org/bob>'
+    }, 'encode_aref from RDF::Trine::Model';
+
+decode_aref({ _id => 'http://example.org/alice', a => 'foaf_Person' }, callback => $model);
+decode_aref({ _id => 'http://example.org/bob', a => 'foaf_Person' }, callback => $model);
 is $model->size, 3, 'added another statement';
+
+is_deeply( encode_aref($model), {
+   'http://example.org/alice' => {
+     'a' => 'foaf_Person',
+     'foaf_knows' => '<http://example.org/bob>'
+   },
+   'http://example.org/bob' => {
+     'a' => 'foaf_Person'
+   }
+ }, 'converted predicate map to subject map');
+
 
 # bnodes
 $model = RDF::Trine::Model->new;
@@ -69,24 +74,18 @@ ok $warning, "bad IRI";
 is $model->size, 5, 'ignored illformed URI';
 
 my $encoder = RDF::aREF::Encoder->new(ns => '20140910');
-my $aref = { };
-$encoder->add_triple( $aref, statement( 
+
+is_deeply $encoder->triple( 
     iri('http://example.org/'),
     iri('http://www.w3.org/1999/02/22-rdf-syntax-ns#type'),
     iri('http://xmlns.com/foaf/0.1/Agent'),
-) );
-$encoder->add_triple( $aref, statement( 
+), { _id => 'http://example.org/', a => 'foaf_Agent' }, 'triple';
+
+is_deeply $encoder->triple( 
     iri('http://example.org/'),
     iri('http://xmlns.com/foaf/0.1/name'),
     literal('Anne','de'),
-) );
-
-is_deeply $aref, {
-    'http://example.org/' => {
-        a => 'foaf_Agent',
-        foaf_name => 'Anne@de'
-    }
-}, 'encoder add_triple';
+), { _id => 'http://example.org/', foaf_name => 'Anne@de' }, 'triple';
 
 # TODO encode_aref $model / $iterator
 

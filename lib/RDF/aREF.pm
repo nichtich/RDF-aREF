@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use v5.10;
 
-our $VERSION = '0.21';
+our $VERSION = '0.22';
 
 use RDF::aREF::Query;
 use RDF::aREF::Decoder;
@@ -23,27 +23,27 @@ sub decode_aref(@) { ## no critic
 sub encode_aref(@) { ## no critic
     my ($source, %options) = @_;
     my $encoder = RDF::aREF::Encoder->new(%options);
-    my $aref = {};
+    my $aref = $options{to} // {};
 
     if (blessed $source and $source->isa('RDF::Trine::Iterator')) {
-        $encoder->add_iterator( $aref, $source );
+        $encoder->_add_iterator( $source, $aref );
     } elsif (blessed $source and $source->DOES('Attean::API::TripleIterator')) {
-        $encoder->add_iterator( $aref, $source );
+        $encoder->_add_iterator( $source, $aref );
     } elsif (blessed $source and $source->isa('RDF::Trine::Model')) {
-        $encoder->add_iterator( $aref, $source->as_stream );
+        $encoder->_add_iterator( $source->as_stream, $aref );
     } elsif (blessed $source and $source->DOES('Attean::API::TripleStore')) {
-        $encoder->add_iterator( $aref, $source->get_triples );
+        $encoder->_add_iterator( $source->get_triples, $aref );
     } elsif (!ref $source and $source =~ qr{^https?://}) {
        if (eval { require RDF::Trine::Model; require RDF::Trine::Parser; 1 }) {
             my $model = RDF::Trine::Model->new;
             RDF::Trine::Parser->parse_url_into_model($source, $model); # TODO: use iterator
-            $encoder->add_iterator( $aref, $model->as_stream );
+            $encoder->_add_iterator( $model->as_stream, $aref );
        } else {
            croak "encoding aREF from URL not supported. Install RDF::Trine or Attean!";
        }
     } elsif (ref $source and reftype $source eq 'HASH') {
-        $encoder->add_hashref( $aref, $source );
-    } # TODO: add via callback with code reference
+        $encoder->_add_hashref( $source, $aref );
+    } # TODO: add via callback with code reference?
     
     return $aref;
 }

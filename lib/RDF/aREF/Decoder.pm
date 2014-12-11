@@ -3,14 +3,15 @@ use strict;
 use warnings;
 use v5.10;
 
-our $VERSION = '0.19';
+our $VERSION = '0.22';
 
 use RDF::NS;
 use Carp qw(croak carp);
 use Scalar::Util qw(refaddr reftype blessed);
 
 use parent 'Exporter'; 
-our @EXPORT_OK = qw(prefix qName blankNode IRIlike languageString languageTag datatypeString);
+our @EXPORT_OK = qw(prefix localName qName blankNode IRIlike languageString 
+    languageTag datatypeString);
 
 our ($PREFIX, $NAME);
 BEGIN {
@@ -20,6 +21,7 @@ BEGIN {
     our $NAME   = "[$nameStartChar][$nameChar]*";
 }
 
+use constant localName      => qr/^$NAME$/;
 use constant prefix         => qr/^$PREFIX$/;
 use constant qName          => qr/^($PREFIX)_($NAME)$/;
 use constant blankNode      => qr/^_:([a-zA-Z0-9]+)$/;

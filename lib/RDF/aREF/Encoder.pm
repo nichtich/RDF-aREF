@@ -3,9 +3,10 @@ use strict;
 use warnings;
 use v5.10;
 
-our $VERSION = '0.20';
+our $VERSION = '0.22';
 
 use RDF::NS;
+use RDF::aREF::Decoder qw(localName);
 use Scalar::Util qw(blessed reftype);
 
 sub new {
@@ -25,6 +26,7 @@ sub new {
     }
 
     $options{sn} = $options{ns}->REVERSE;
+    $options{subject_map} = !!$options{subject_map};
 
     bless \%options, $class;
 }
@@ -33,7 +35,9 @@ sub qname {
     my ($self, $uri) = @_;
     return unless $self->{sn};
     my @qname = $self->{sn}->qname($uri);
-    return @qname ? join('_',@qname) : undef;
+    return $qname[0] if @qname == 1;
+    return join('_',@qname) if @qname and $qname[1] =~ localName;
+    return;
 }
 
 sub uri {
@@ -46,42 +50,85 @@ sub uri {
     }
 }
 
+sub subject {
+    my ($self, $subject) = @_;
+
+    return do {
+        if (!reftype $subject) {
+            undef
+        # RDF/JSON
+        } elsif (reftype $subject eq 'HASH') {
+            if ($subject->{type} eq 'uri' or $subject->{type} eq 'bnode') {
+                $subject->{value}
+            }
+        # RDF::Trine::Node
+        } elsif (reftype $subject eq 'ARRAY') { 
+            if (@$subject == 2 ) {
+                if ($subject->[0] eq 'URI') {
+                    "".$subject->[1];
+                } elsif ($subject->[0] eq 'BLANK') {
+                    $self->bnode($subject->[1])
+                }
+            }
+        }
+    };
+}
+
 sub predicate {
     my ($self, $predicate) = @_;
 
-    return 'a' if $predicate eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type';
+    $predicate = do {
+        if (!reftype $predicate) {
+            undef
+        # RDF/JSON
+        } elsif (reftype $predicate eq 'HASH' and $predicate->{type} eq 'uri') {
+            $predicate->{value}
+        # RDF::Trine::Node
+        } elsif (reftype $predicate eq 'ARRAY') { 
+            (@$predicate == 2 and $predicate->[0] eq 'URI') 
+                ? "".$predicate->[1] : undef;
+        }
+    };
 
-    if ( my $qname = $self->qname($predicate) ) {
-        return $qname;
-    } else {
-        return $predicate;
-    }
+    return do {
+        if ( !defined $predicate ) {
+            undef
+        } elsif ( $predicate eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type' ) {
+            'a'
+        } elsif ( my $qname = $self->qname($predicate) ) {
+            $qname
+        } else {
+            $predicate
+        }
+    };
 }
 
 sub object {
     my ($self, $object) = @_;
 
-    if (reftype $object eq 'HASH') {
-        if ($object->{type} eq 'literal') {
-            $self->literal( $object->{value}, $object->{lang}, $object->{datatype} )
-        } elsif ($object->{type} eq 'bnode') {
-            $object->{value}
-        } else {
-            $self->uri($object->{value})
+    return do {
+        if (!reftype $object) {
+            undef
+        # RDF/JSON
+        } elsif (reftype $object eq 'HASH') {
+            if ($object->{type} eq 'literal') {
+                $self->literal( $object->{value}, $object->{lang}, $object->{datatype} )
+            } elsif ($object->{type} eq 'bnode') {
+                $object->{value}
+            } else {
+                $self->uri($object->{value})
+            }
+        # RDF::Trine::Node
+        } elsif (reftype $object eq 'ARRAY') {
+            if (@$object != 2 ) {
+                $self->literal(@$object)
+            } elsif ($object->[0] eq 'URI') {
+                $self->uri("".$object->[1])
+            } elsif ($object->[0] eq 'BLANK') {
+                $self->bnode($object->[1])
+            }
         }
-    } elsif (reftype $object eq 'ARRAY') {
-        if (@$object != 2 ) {
-            $self->literal(@$object)
-        } elsif ($object->[0] eq 'URI') {
-            $self->uri("".$object->[1])
-        } elsif ($object->[0] eq 'BLANK') {
-            $self->bnode($object->[1])
-        } else {
-            return
-        }
-    } else {
-        return
-    }
+    };
 }
 
 sub literal {
@@ -99,62 +146,79 @@ sub bnode {
     '_:'.$_[1]
 }
 
-sub add_objects {
-    my ($self, $map, $predicate, $objects) = @_;
-    $predicate = $self->predicate($predicate);
+sub triple {
+    my ($self, $subject, $predicate, $object, $aref) = @_;
+    
+    $subject   = $self->subject($subject) // return;
+    $predicate = $self->predicate($predicate) // return;
+    $object    = $self->object($object) // return;
+    $aref //= { };
 
-    return unless @$objects;
-    my @objects = map { $self->object($_) } @$objects;
-
-    if (ref $map->{$predicate}) {
-        push @{$map->{$predicate}}, @objects;
-    } elsif ($map->{$predicate}) {
-        unshift @objects, $map->{$predicate};
-        $map->{$predicate} = \@objects;
-    } else {
-        $map->{$predicate} = @objects > 1 ? \@objects : $objects[0];
-    }
-}
-
-sub add_triple {
-    my $self = shift;
-    my $aref = shift;
-
-    my ($subject, $predicate, $object) = @_; # TODO: support callback format
-
-    if (@_ == 1) { # RDF::Trine::Statement
-        $subject   = $_[0]->subject->is_blank ? $_[0]->subject->sse 
-                                              : $_[0]->subject->uri_value;
-        $predicate = $_[0]->predicate->uri_value;
-        $object    = $_[0]->object;
-    }
-
-    # TODO: support predicate maps
-    # TODO: create new bnode identifiers, if requested
-    my $map = ($aref->{ $subject } //= { }); # TODO: $self->subject($s);
-    $self->add_objects( $map, $predicate, [$object] );
-}
-
-sub add_iterator {
-    my ($self, $aref, $iterator) = @_;    
-    while (my $statement = $iterator->next) {
-        $self->add_triple($aref, $statement);
-    }
-}
-
-sub add_hashref {
-    my ($self, $aref, $hashref) = @_;
-
-    while (my ($s,$ps) = each %$hashref) {
-        foreach my $p (keys %$ps) {
-            $self->add_objects(
-                $aref->{ $s } //= { }, # TODO $self->subject($s)
-                $p,
-                $hashref->{$s}->{$p}
-            )
+   # empty
+    if ( !keys %$aref and !$self->{subject_map} ) {
+        $aref->{_id} = $subject;
+        $aref->{$predicate} = $object;
+    # predicate map
+    } elsif ( $aref->{_id} ) {
+        if ( $aref->{_id} eq $subject and !$self->{subject_map} ) {
+            $self->_add_object_to_predicate_map( $aref, $predicate, $object );
+        } else {
+            # convert predicate map to subject map
+            my $s = delete $aref->{_id};
+            my $pm = { };
+            foreach (keys %$aref) {
+                $pm->{$_} = delete $aref->{$_};
+            }
+            if ($s eq $subject) {
+                $self->_add_object_to_predicate_map( $pm, $predicate, $object ); 
+            } else {
+                $aref->{$subject} = { $predicate => $object };
+            }
+            $aref->{$s} = $pm;
+        }
+    } else { # subject map
+        if ( $aref->{$subject} ) {
+            $self->_add_object_to_predicate_map( $aref->{$subject}, $predicate, $object );
+        } else {
+            $aref->{$subject} = { $predicate => $object };
         }
     }
 
+    return $aref;
+}
+
+sub _add_object_to_predicate_map {
+    my ($self, $map, $predicate, $object) = @_;
+
+    if (ref $map->{$predicate}) {
+        push @{$map->{$predicate}}, $object;
+    } elsif ($map->{$predicate}) {
+        $map->{$predicate} = [ $map->{$predicate}, $object ];
+    } else {
+        $map->{$predicate} = $object;
+    }
+}
+
+sub _add_iterator {
+    my ($self, $iterator, $aref) = @_;    
+    while (my $s = $iterator->next) {
+        $self->triple($s->subject, $s->predicate, $s->object, $aref);
+    }
+}
+ 
+sub _add_hashref {
+    my ($self, $hashref, $aref) = @_;
+ 
+    while (my ($s,$ps) = each %$hashref) {
+        my $subject = $s =~ /^_:/ ? ['BLANK',$s] : ['URI',$s];
+        foreach my $p (keys %$ps) {
+            my $predicate = ['URI',$p];
+            foreach my $object (@{ $hashref->{$s}->{$p} }) {
+                $self->triple($subject, $predicate, $object, $aref);
+            }
+        }
+    }
+ 
 }
 
 1;
@@ -173,9 +237,11 @@ RDF::aREF::Encoder - encode RDF to another RDF Encoding Form
 
     my $qname  = $encoder->qname('http://schema.org/Review'); # 'schema_Review'
 
-    my $predicate = $encoder->predicate(
-        'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'
-    ); # 'a'
+
+    my $predicate = $encoder->predicate({
+        type  => 'uri',
+        value => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'
+    }); # 'a'
 
     my $object = $encoder->object({
         type  => 'literal',
@@ -190,7 +256,8 @@ RDF::aREF::Encoder - encode RDF to another RDF Encoding Form
     use RDF::Trine::Parser;
     my $aref = { };
     RDF::Trine::Parser->parse_file ( $base_uri, $fh, sub {
-        $encoder->add_triple( $aref, $_[0] );
+        my $s = shift;
+        $encoder->triple( $s->subject, $s->predicate, $s->object, $aref );
     } );
 
 =head1 DESCRIPTION
@@ -208,6 +275,20 @@ stable qNames or as instance of L<RDF::NS>. The most recent installed version
 of L<RDF::NS> is used by default. The value C<0> can be used to only use
 required namespace mappings (rdf, rdfs, owl and xsd).
 
+=head2 subject_map
+
+By default RDF graphs with common subject are encoded as aREF predicate map:
+
+   {
+      _id => $subject, $predicate => $object
+   }
+
+Enable this option to always encode as aREF subject map:
+
+   {
+       $subject => { $predicate => $object }
+   }
+
 =head1 METHODS
 
 Note that no syntax checking is applied, e.g. whether a given URI is a valid
@@ -222,10 +303,6 @@ C<http://purl.org/dc/terms/title> is abbreviated to "C<dct_title>".
 
 Abbreviate an URI or as qName or enclose it in angular brackets.
 
-=head2 predicate( $uri )
-
-Return an predicate URI as qNamem, as "C<a>", or as given URI.
-
 =head2 literal( $value, $language_tag, $datatype_uri )
 
 Encode a literal RDF node by either appending "C<@>" and an optional
@@ -235,12 +312,17 @@ language tag, or "C<^>" and an datatype URI.
 
 Encode a blank node by prepending "C<_:>" to its identifier.
 
+=head2 subject( $subject )
+
+=head2 predicate( $predicate )
+
 =head2 object( $object )
 
-Encode an RDF object given either as hash reference as defined in
+Encode an RDF subject, predicate, or object respectively. The argument must
+either be given as hash reference, as defined in
 L<RDF/JSON|http://www.w3.org/TR/rdf-json/> format (see also method
-C<as_hashref> of L<RDF::Trine::Model>), or in array reference as
-internally used by L<RDF::Trine>.
+C<as_hashref> of L<RDF::Trine::Model>), or as array reference as internally
+used by L<RDF::Trine>.
 
 A hash reference is expected to have the following fields:
 
@@ -283,28 +365,12 @@ two elements "C<BLANK>" and the blank node identifier for blank nodes.
 
 =back
 
-=head2 add_triple( $aref, $statement )
+=head2 triple( $subject, $predicate, $object, [, $aref ] )
 
-Add a L<RDF::Trine::Stament> to an aREF subject map.
-
-I<experimental>
-
-=head2 add_iterator( $aref, $iterator )
-
-Add a L<RDF::Trine::Iterator> to an aREF subject map.
-
-I<experimental>
-
-=head2 add_objects( $predicate_map, $predicate, $objects )
-
-I<experimental>
-
-=head2 add_hashref( $aref, $rdf )
-
-Add RDF given in L<RDF/JSON|http://www.w3.org/TR/rdf-json/> format (as returned
-by method C<as_hashref> in L<RDF::Trine::Model>).
-
-I<experimental>
+Encode an RDF triple, its elements given as explained for method C<subject>,
+C<predicate>, and C<object>. If an aREF data structure is given as fourth
+argument, the triple is added to this structure, possibly changing an aREF
+predicate map to an aRef subject map. Returns C<undef> on failure.
 
 =head1 SEE ALSO
 

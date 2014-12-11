@@ -37,7 +37,7 @@
       },
       "runtime" : {
          "requires" : {
-            "RDF::NS" : "20140910",
+            "RDF::NS" : "20140908",
             "perl" : "v5.10.0"
          },
          "suggests" : {
@@ -63,7 +63,7 @@
          "web" : "https://github.com/nichtich/RDF-aREF"
       }
    },
-   "version" : "0.21",
+   "version" : "0.22",
    "x_contributors" : [
       "Jakob Voss <jakob@nichtich.de>",
       "Jakob Voss <voss@gbv.de>"
