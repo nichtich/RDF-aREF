@@ -2,7 +2,7 @@
 
 {{$NEXT}}
   - modified encoder, added subject and triple method
-  - removed or hidden exerimental methods
+  - remove or hide some exerimental methods
 
 0.21  2014-10-28 14:08:40 CET
   - allow 'a' in aREF query expressions

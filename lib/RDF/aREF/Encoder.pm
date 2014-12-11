@@ -199,14 +199,14 @@ sub _add_object_to_predicate_map {
     }
 }
 
-sub _add_iterator {
+sub add_iterator {
     my ($self, $iterator, $aref) = @_;    
     while (my $s = $iterator->next) {
         $self->triple($s->subject, $s->predicate, $s->object, $aref);
     }
 }
  
-sub _add_hashref {
+sub add_hashref {
     my ($self, $hashref, $aref) = @_;
  
     while (my ($s,$ps) = each %$hashref) {
@@ -371,6 +371,17 @@ Encode an RDF triple, its elements given as explained for method C<subject>,
 C<predicate>, and C<object>. If an aREF data structure is given as fourth
 argument, the triple is added to this structure, possibly changing an aREF
 predicate map to an aRef subject map. Returns C<undef> on failure.
+
+=head2 add_hashref( $aref, $rdf )
+ 
+Add RDF given in L<RDF/JSON|http://www.w3.org/TR/rdf-json/> format (as returned
+by method C<as_hashref> in L<RDF::Trine::Model>).
+
+=head2 add_iterator( $aref, $iterator )
+ 
+Add a L<RDF::Trine::Iterator> to an aREF subject map.
+ 
+I<experimental>
 
 =head1 SEE ALSO
 
