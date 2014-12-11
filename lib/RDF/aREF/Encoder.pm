@@ -192,7 +192,7 @@ sub _add_object_to_predicate_map {
 
     if (ref $map->{$predicate}) {
         push @{$map->{$predicate}}, $object;
-    } elsif ($map->{$predicate}) {
+    } elsif (defined $map->{$predicate}) {
         $map->{$predicate} = [ $map->{$predicate}, $object ];
     } else {
         $map->{$predicate} = $object;
