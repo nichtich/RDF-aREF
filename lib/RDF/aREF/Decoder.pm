@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use v5.10;
 
-our $VERSION = '0.22';
+our $VERSION = '0.23';
 
 use RDF::NS;
 use Carp qw(croak carp);
@@ -45,6 +45,7 @@ sub new {
         null         => $options{null}, # undef by default
         bnode_prefix => $options{bnode_prefix} || 'b',
         bnode_count  => $options{bnode_count} || 0,
+        bnode_map    => { },
     }, $class;
 
     # facilitate use of this module together with RDF::Trine
@@ -96,9 +97,11 @@ sub namespace_map { # sets the local namespace map
 }
 
 sub decode {
-    my ($self, $map) = @_;
+    my ($self, $map, %options) = @_;
 
-    $self->{blank_node_ids} = { }; # required (?)
+    unless ($options{keep_bnode_map}) {
+        $self->{bnode_map} = { };
+    }
     $self->{visited} = { };
 
     $self->namespace_map( $map->{"_ns"} );
@@ -345,21 +348,26 @@ sub bnode_count {
     $_[0]->{bnode_count};
 }
 
+# TODO: test this
 sub blank_identifier {
     my ($self, $id) = @_;
 
-    # TODO: preserve ids on request
-
     my $bnode;
     if ( defined $id ) {
-        $bnode = ($self->{blank_node_ids}{$id} //= $self->{bnode_prefix} . ++$self->{bnode_count});
+        $bnode = ($self->{bnode_map}{$id} //= $self->{bnode_prefix} . ++$self->{bnode_count});
     } else {
         $bnode = $self->{bnode_prefix} . ++$self->{bnode_count};
     }
 
     return \$bnode;
 }
- 
+
+sub clean_bnodes {
+    my ($self) = @_;
+    $self->{bnode_count} = 0;
+    $self->{bnode_map} = {};
+}
+
 # TODO: test this
 sub trine_statement {
     RDF::Trine::Statement->new(
@@ -469,12 +477,23 @@ empty string as literal value.
 A prefix for blank node identifiers. Defaults to "b", so blank node identifiers
 will be "b1", "b2", "b3" etc.
 
-=head2 bnode_counter
+=head2 bnode_count
 
 An integer to start creating blank node identifiers with. The default value "0"
 results in blank node identifiers starting from "b1". This option can be useful
 to avoid collision of blank node identifiers when merging multiple aREF
 instances. The current counter value is accessible as accessor.
+
+=head1 METHODS
+
+=head2 decode( $aref [, keep_bnode_map => 1 ] )
+
+Encode RDF data given in aREF. Resets all blank node identifier mappings unless
+option c<keep_bnode_map> is set.
+
+=head2 clean_bnodes
+
+Delete blank node identifier mapping and reset bnode_count.
 
 =head1 EXPORTABLE CONSTANTS
 

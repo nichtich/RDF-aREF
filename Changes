@@ -1,6 +1,7 @@
 # Changelog for RDF-aREF
 
 {{$NEXT}}
+  - new decoder option keep_bnode_map
 
 0.22  2014-12-11 14:57:01 CET
   - modified encoder, added subject and triple method
