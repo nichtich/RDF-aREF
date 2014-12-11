@@ -1,6 +1,8 @@
 # Changelog for RDF-aREF
 
 {{$NEXT}}
+
+0.22  2014-12-11 14:57:01 CET
   - modified encoder, added subject and triple method
   - remove or hide some exerimental methods
   - avoid malformed bnode identifiers
