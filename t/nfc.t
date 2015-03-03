@@ -10,5 +10,4 @@ is $aref->{foaf_given}, $aref->{foaf_surname}, "Unicode Normalization NFC";
 $aref = encode_aref $rdf; 
 isnt $aref->{foaf_given}, $aref->{foaf_surname}, "Unicode Normalization NFC";
 
-note explain $aref;
-
+done_testing;

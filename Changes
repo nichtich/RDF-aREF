@@ -1,6 +1,7 @@
 # Changelog for RDF-aREF
 
 {{$NEXT}}
+  - support aREF query expression with multiple items
   - support encoding RDF from file
   - support Unicode normalization
 

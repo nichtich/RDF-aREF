@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use v5.10;
 
-our $VERSION = '0.24';
+our $VERSION = '0.25';
 
 use RDF::aREF::Decoder qw(qName languageTag);
 use Carp qw(croak);
@@ -12,65 +12,83 @@ use RDF::NS;
 sub new {
     my ($class, %options) = @_;
 
-    my $expr    = $options{query} // croak "query required";
-    my $ns      = $options{ns} // RDF::NS->new;
-    my $decoder = $options{decoder} // RDF::aREF::Decoder->new( ns => $ns );
+    my $expression = $options{query} // croak "query required";
+    my $ns         = $options{ns} // RDF::NS->new;
+    my $decoder    = $options{decoder} // RDF::aREF::Decoder->new( ns => $ns );
 
-    my $type = 'any';
-    my ($language, $datatype);
-
-    if ($expr =~ /^(.*)\.$/) {
-        $type = 'resource';
-        $expr = $1;
-    } elsif ( $expr =~ /^([^@]*)@([^@]*)$/ ) {
-        ($expr, $language) = ($1, $2);
-        if ( $language eq '' or $language =~ languageTag ) {
-            $type = 'literal';
-        } else {
-            croak 'invalid languageTag in aREF query';
-        }
-    } elsif ( $expr =~ /^([^^]*)\^([^^]*)$/ ) { # TODO: support explicit IRI
-        ($expr, $datatype) = ($1, $2);
-        if ( $datatype =~ qName ) {
-            $type = 'literal';
-            $datatype = $decoder->prefixed_name( split '_', $datatype );
-            $datatype = undef if $datatype eq $decoder->prefixed_name('xsd','string');
-        } else {
-            croak 'invalid datatype qName in aREF query';
-        }
-    }
-
-    my @path = split /\./, $expr;
-    foreach (@path) {
-        croak "invalid aref path expression" if $_ !~ qName and $_ ne 'a';
-    }
-
-    bless {
-        path     => \@path,
-        type     => $type,
-        language => $language,
-        datatype => $datatype,
-        decoder  => $decoder,
+    my $self = bless { 
+        items   => [],
+        decoder => $decoder
     }, $class;
+
+    my @items = split /\s*\|\s*/, $expression;
+    foreach my $expr ( @items ? @items : '' ) {
+        my $type = 'any';
+        my ($language, $datatype);
+
+        if ($expr =~ /^(.*)\.$/) {
+            $type = 'resource';
+            $expr = $1;
+        } elsif ( $expr =~ /^([^@]*)@([^@]*)$/ ) {
+            ($expr, $language) = ($1, $2);
+            if ( $language eq '' or $language =~ languageTag ) {
+                $type = 'literal';
+            } else {
+                croak 'invalid languageTag in aREF query';
+            }
+        } elsif ( $expr =~ /^([^^]*)\^([^^]*)$/ ) { # TODO: support explicit IRI
+            ($expr, $datatype) = ($1, $2);
+            if ( $datatype =~ qName ) {
+                $type = 'literal';
+                $datatype = $decoder->prefixed_name( split '_', $datatype );
+                $datatype = undef if $datatype eq $decoder->prefixed_name('xsd','string');
+            } else {
+                croak 'invalid datatype qName in aREF query';
+            }
+        }
+
+        my @path = split /\./, $expr;
+        foreach (@path) {
+            croak "invalid aref path expression: $_" if $_ !~ qName and $_ ne 'a';
+        }
+
+        push @{$self->{items}}, {
+            path     => \@path,
+            type     => $type,
+            language => $language,
+            datatype => $datatype,
+        };
+    }
+
+    $self;
 }
 
 sub query {
     my ($self) = @_;
-    my $query = join '.', @{$self->{path}};
-    if ($self->{type} eq 'literal') {
-        if ($self->{datatype}) {
-            $query .= '^' . $self->{datatype};
-        } else {
-            $query .= '@' . ($self->{language} // '');
+    join '|', map { 
+        my $q = join '.', @{$_->{path}};
+        if ($_->{type} eq 'literal') {
+            if ($_->{datatype}) {
+                $q .= '^' . $_->{datatype};
+            } else {
+                $q .= '@' . ($_->{language} // '');
+            }
+        } elsif ($_->{type} eq 'resource') {
+            $q .= '.';
         }
-    } elsif ($self->{type} eq 'resource') {
-        $query .= '.';
-    }
-    $query;
+        $q;
+    } @{$self->{items}}
 }
 
 sub apply {
     my ($self, $rdf, $subject) = @_;
+
+    my @n = map { $self->_apply_item($rdf, $subject, $_) } @{$self->{items}};
+    return @n;
+}
+
+sub _apply_item {
+    my ($self, $rdf, $subject, $item) = @_;
 
     my $decoder = $self->{decoder};
 
@@ -78,9 +96,9 @@ sub apply {
     # TODO: try abbreviated *and* full URI?
     my @current = ($subject ? $rdf->{$subject} : $rdf); # TODO: for predicate map
 
-    my @path = @{$self->{path}};
-    if (!@path and $self->{type} ne 'resource') {
-        if ($self->{type} eq 'any') {
+    my @path = @{$item->{path}};
+    if (!@path and $item->{type} ne 'resource') {
+        if ($item->{type} eq 'any') {
             return ($subject ? $subject : $rdf->{_id});
         }
     }
@@ -93,7 +111,7 @@ sub apply {
                    map { $_->{$field} } @current;
         return if !@current;
 
-        if (@path or $self->{type} eq 'resource') {
+        if (@path or $item->{type} eq 'resource') {
 
             # get resources
             @current = grep { defined } 
@@ -109,14 +127,13 @@ sub apply {
     # last path element
     @current = grep { defined } map { $decoder->object($_) } @current;
 
-    if ($self->{type} eq 'literal') {
+    if ($item->{type} eq 'literal') {
         @current = grep { @$_ > 1 } @current;
 
-        if ($self->{language}) { # TODO: use language tag substring
-            @current = grep { $_->[1] and $_->[1] eq $self->{language} } 
-                       @current; 
-        } elsif ($self->{datatype}) { # TODO: support qName and explicit IRI
-            @current = grep { $_->[2] and $_->[2] eq $self->{datatype} } @current; 
+        if ($item->{language}) { # TODO: use language tag substring
+            @current = grep { $_->[1] and $_->[1] eq $item->{language} } @current; 
+        } elsif ($item->{datatype}) { # TODO: support qName and explicit IRI
+            @current = grep { $_->[2] and $_->[2] eq $item->{datatype} } @current; 
         }
     }
 

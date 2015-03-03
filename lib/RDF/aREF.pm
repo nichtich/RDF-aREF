@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use v5.10;
 
-our $VERSION = '0.24';
+our $VERSION = '0.25';
 
 use RDF::aREF::Query;
 use RDF::aREF::Decoder;
@@ -14,6 +14,8 @@ use Carp qw(croak);
 use parent 'Exporter';
 our @EXPORT = qw(decode_aref encode_aref aref_query aref_query_map);
 our %EXPORT_TAGS = (all => [@EXPORT]);
+
+our @CARP_NOT = qw(RDF::aREF::Query RDF::aREF::Decoder RDF::aREF::Encoder);
 
 sub decode_aref(@) { ## no critic
     my ($aref, %options) = @_;
@@ -56,13 +58,10 @@ sub encode_aref(@) { ## no critic
 
 sub aref_query(@) { ## no critic
     my ($graph, $origin, @queries) = @_ < 3 ? ($_[0], undef, $_[1]) : @_;
-
-    map { $_->apply($graph, $origin) }
-    map { (blessed $_ and $_->isa('RDF::aREF::Query')) 
-          ? $_ : RDF::aREF::Query->new( query => $_ ) } @queries;
+    RDF::aREF::Query->new( query => join '|', @queries )->apply($graph, $origin);
 }
 
-sub aref_query_map {
+sub aref_query_map(@) { ## no critic
     my ($graph, $origin, $map) = @_ < 3 ? ($_[0], undef, $_[1]) : @_;
 
     my %record;

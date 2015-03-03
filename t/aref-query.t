@@ -1,7 +1,6 @@
-use Test::More;
 use strict;
 use warnings;
-
+use Test::More;
 use RDF::aREF qw(aref_query aref_query_map);
 use RDF::aREF::Query;
 use Scalar::Util qw(reftype);
@@ -23,8 +22,6 @@ is_deeply [ aref_query($rdf, $uri, '') ], [ $uri ], 'empty query';
 
 is_deeply [ aref_query($rdf, $uri, 'dct_title') ], 
     ['Frictional Coefficient under Banana Skin'], 'dct_title';
-is_deeply [ aref_query($rdf, $uri, RDF::aREF::Query->new(query => 'dct_title')) ], 
-    ['Frictional Coefficient under Banana Skin'], 'dct_title (RDF::aREF::Query)';
 is_deeply [ aref_query($rdf, $uri, 'dct_title@') ], 
     ['Frictional Coefficient under Banana Skin'], 'dct_title@';
 is_deeply [ aref_query($rdf, $uri, 'dct_title^xsd_string') ], 
@@ -73,6 +70,10 @@ while ( my ($query, $count) = each %names ) {
 
 is scalar @{[ aref_query( $rdf, $uri, 
     qw(dct_creator. schema_author. dct_publisher.)) ]}, 5, 'multiple queries';
+
+is_deeply [
+        aref_query( $rdf, $uri, 'bibo_pageStart|bibo_unknown|bibo_pageEnd' ) 
+    ], [qw(147 151)], 'multiple items';
 
 foreach my $query ( "dct_title@#", "dct_date^_" ) {
     eval { RDF::Query->new($query) };
