@@ -104,4 +104,16 @@ foreach my $query ( "dct_title@#", "dct_date^_" ) {
     is_deeply [ sort @{$record->{creator}} ], [qw(Alice Bob)], 'aref_query_map';
 }
 
+{
+    my $url = "http://example.org/";
+    my $aref = {
+        dct_title => "Hello@",
+        _id       => $url,
+    };
+    is_deeply [ aref_query($aref, $url, 'dct_title@de','dct_title@') ],
+        ["Hello"], "query from property map";
+    is_deeply [ aref_query($aref, undef, 'dct_title@de','dct_title@') ],
+        ["Hello"], "query from property map";
+}
+
 done_testing;

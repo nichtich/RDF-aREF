@@ -5,6 +5,12 @@ perl:
     - "5.16"
     - "5.14"
     - "5.12"
+    - "5.10"
+matrix:
+    fast_finish: true
+    allow_failures:
+        - perl: "5.10"
+        - perl: "5.12"
 install:
     - cpanm -nq --skip-satisfied Dist::Milla RDF::Trine Unicode::Normalize
     - cpanm --installdeps .

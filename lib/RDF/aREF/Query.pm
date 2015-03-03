@@ -82,19 +82,24 @@ sub query {
 
 sub apply {
     my ($self, $rdf, $subject) = @_;
-
-    my @n = map { $self->_apply_item($rdf, $subject, $_) } @{$self->{items}};
-    return @n;
+    map { $self->_apply_item($_, $rdf, $subject) } @{$self->{items}};
 }
 
 sub _apply_item {
-    my ($self, $rdf, $subject, $item) = @_;
+    my ($self, $item, $rdf, $subject) = @_;
 
     my $decoder = $self->{decoder};
 
     # TODO: Support RDF::Trine::Model
     # TODO: try abbreviated *and* full URI?
-    my @current = ($subject ? $rdf->{$subject} : $rdf); # TODO: for predicate map
+    my @current = $rdf;
+    if ($subject) {
+        if ($rdf->{_id}) {
+            return if $rdf->{_id} ne $subject;
+        } else {
+            @current = ($rdf->{$subject});
+        }
+    }
 
     my @path = @{$item->{path}};
     if (!@path and $item->{type} ne 'resource') {
@@ -137,9 +142,7 @@ sub _apply_item {
         }
     }
 
-    @current = map { $_->[0] } @current; # IRI or string value
-
-    return @current;
+    map { $_->[0] } @current; # IRI or string value
 }
 
 1;
