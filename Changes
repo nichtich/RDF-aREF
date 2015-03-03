@@ -1,6 +1,8 @@
 # Changelog for RDF-aREF
 
 {{$NEXT}}
+  - support encoding RDF from file
+  - support Unicode normalization
 
 0.23  2014-12-11 16:40:30 CET
   - new decoder option keep_bnode_map

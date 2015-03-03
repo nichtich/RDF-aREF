@@ -8,6 +8,7 @@ our $VERSION = '0.22';
 use RDF::NS;
 use RDF::aREF::Decoder qw(localName blankNodeIdentifier);
 use Scalar::Util qw(blessed reftype);
+use Carp qw(croak);
 
 sub new {
     my ($class, %options) = @_;
@@ -27,6 +28,10 @@ sub new {
 
     $options{sn} = $options{ns}->REVERSE;
     $options{subject_map} = !!$options{subject_map};
+    if ($options{NFC}) {
+        eval { require Unicode::Normalize };
+        croak "Missing Unicode::Normalize: NFC normalization disabled!\n" if $@;
+    }
 
     bless \%options, $class;
 }
@@ -133,6 +138,9 @@ sub object {
 
 sub literal {
     my ($self, $value, $language, $datatype) = @_;
+    if ($self->{NFC}) {
+        $value = Unicode::Normalize::NFC($value);
+    }
     if ($language) {
         $value.'@'.$language
     } elsif ($datatype) {
