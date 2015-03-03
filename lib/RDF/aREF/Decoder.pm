@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use v5.10;
 
-our $VERSION = '0.23';
+our $VERSION = '0.24';
 
 use RDF::NS;
 use Carp qw(croak carp);

@@ -64,12 +64,12 @@ Equivalent to `RDF::aREF::Decoder->new(%options)->decode($aref)`.
 
 ## encode\_aref $graph \[, %options \]
 
-Construct an aREF subject map (using a new [RDF::aREF::Encoder](https://metacpan.org/pod/RDF::aREF::Encoder)) fron an RDF
-graph. The graph can be supplied as:
+Construct an aREF subject mapfrom an RDF graph. The [RDF::aREF::Encoder](https://metacpan.org/pod/RDF::aREF::Encoder) for
+possible options. The `$graph` can be supplied as:
 
 - instance of [RDF::Trine::Model](https://metacpan.org/pod/RDF::Trine::Model)
 - instance of [RDF::Trine::Model::Iterator](https://metacpan.org/pod/RDF::Trine::Model::Iterator)
-- an URL (experimental and only if RDF::Trine is installed)
+- an URL or a filename (only if [RDF::Trine](https://metacpan.org/pod/RDF::Trine) is installed)
 - instance of [Attean::API::TripleIterator](https://metacpan.org/pod/Attean::API::TripleIterator) (experimental)
 - instance of [Attean::API::TripleStore](https://metacpan.org/pod/Attean::API::TripleStore) (experimental)
 - hash reference with [RDF/JSON](http://www.w3.org/TR/rdf-json/) format (as
