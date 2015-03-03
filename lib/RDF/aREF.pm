@@ -33,17 +33,23 @@ sub encode_aref(@) { ## no critic
         $encoder->add_iterator( $source->as_stream, $aref );
     } elsif (blessed $source and $source->DOES('Attean::API::TripleStore')) {
         $encoder->add_iterator( $source->get_triples, $aref );
-    } elsif (!ref $source and $source =~ qr{^https?://}) {
-       if (eval { require RDF::Trine::Model; require RDF::Trine::Parser; 1 }) {
-            my $model = RDF::Trine::Model->new;
-            RDF::Trine::Parser->parse_url_into_model($source, $model); # TODO: use iterator
-            $encoder->add_iterator( $model->as_stream, $aref );
-       } else {
-           croak "encoding aREF from URL not supported. Install RDF::Trine or Attean!";
-       }
     } elsif (ref $source and reftype $source eq 'HASH') {
         $encoder->add_hashref( $source, $aref );
-    } # TODO: add via callback with code reference?
+    } elsif (!ref $source) {
+        eval { require RDF::Trine::Model; require RDF::Trine::Parser };
+        croak "RDF::Trine missing: encoding aREF from URL or file not supported!" if $@;
+        my $model = RDF::Trine::Model->new;
+        # TODO: directly use iterator
+        if ($source =~ qr{^https?://}) {
+            RDF::Trine::Parser->parse_url_into_model($source, $model); 
+        } elsif (-f $source) {
+            my $parser = RDF::Trine::Parser->guess_parser_by_filename($source);
+            $parser->parse_file_into_model("file://$source", $source, $model)
+        } else {
+            croak 'invalid RDF graph, given as string';
+        }
+        $encoder->add_iterator( $model->as_stream, $aref );
+    }
     
     return $aref;
 }
@@ -55,7 +61,6 @@ sub aref_query(@) { ## no critic
     map { (blessed $_ and $_->isa('RDF::aREF::Query')) 
           ? $_ : RDF::aREF::Query->new( query => $_ ) } @queries;
 }
-
 
 sub aref_query_map {
     my ($graph, $origin, $map) = @_ < 3 ? ($_[0], undef, $_[1]) : @_;
@@ -154,8 +159,8 @@ Equivalent to C<< RDF::aREF::Decoder->new(%options)->decode($aref) >>.
 
 =head2 encode_aref $graph [, %options ]
 
-Construct an aREF subject map (using a new L<RDF::aREF::Encoder>) fron an RDF
-graph. The graph can be supplied as:
+Construct an aREF subject mapfrom an RDF graph. The L<RDF::aREF::Encoder> for
+possible options. The C<$graph> can be supplied as:
 
 =over
 
@@ -169,7 +174,7 @@ instance of L<RDF::Trine::Model::Iterator>
 
 =item 
 
-an URL (experimental and only if RDF::Trine is installed)
+an URL or a filename (only if L<RDF::Trine> is installed)
 
 =item
 
