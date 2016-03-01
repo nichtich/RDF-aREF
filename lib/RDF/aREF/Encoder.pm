@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use v5.10;
 
-our $VERSION = '0.25';
+our $VERSION = '0.26';
 
 use RDF::NS;
 use RDF::aREF::Decoder qw(localName blankNodeIdentifier);
@@ -143,7 +143,7 @@ sub literal {
     }
     if ($language) {
         $value.'@'.$language
-    } elsif ($datatype) {
+    } elsif ($datatype and $datatype ne 'http://www.w3.org/2001/XMLSchema#string') {
         $value.'^'.$self->uri($datatype)
     } else {
         $value.'@'

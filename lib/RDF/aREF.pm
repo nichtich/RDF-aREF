@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use v5.10;
 
-our $VERSION = '0.25';
+our $VERSION = '0.26';
 
 use RDF::aREF::Query;
 use RDF::aREF::Decoder;

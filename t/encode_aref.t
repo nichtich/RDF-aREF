@@ -44,4 +44,10 @@ is_deeply encode_aref($example, ns => 0, subject_map => 1), {
     }
 }, 'encode_aref( $rdfjson, ns => 0, subject_map => 1)';
 
+{
+    my $encoder = RDF::aREF::Encoder->new( ns => '20140910' );
+    is $encoder->literal('x', '',  'http://www.w3.org/2001/XMLSchema#string'),
+        'x@', 'omit xsd_string';
+}
+
 done_testing;
