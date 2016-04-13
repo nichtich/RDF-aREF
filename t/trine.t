@@ -24,7 +24,7 @@ decode_aref( {
 );
 is $model->size, 2, 'added two statements';
 
-my $aref = encode_aref $model;
+my $aref = encode_aref $model, ns => '20150725';
 is_deeply $aref,  {
         _id => 'http://example.org/alice',
         a => 'foaf_Person',
@@ -35,7 +35,7 @@ decode_aref({ _id => 'http://example.org/alice', a => 'foaf_Person' }, callback 
 decode_aref({ _id => 'http://example.org/bob', a => 'foaf_Person' }, callback => $model);
 is $model->size, 3, 'added another statement';
 
-is_deeply( encode_aref($model), {
+is_deeply( encode_aref($model, ns => '20150725'), {
    'http://example.org/alice' => {
      'a' => 'foaf_Person',
      'foaf_knows' => '<http://example.org/bob>'
