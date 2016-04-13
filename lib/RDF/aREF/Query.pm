@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use v5.10;
 
-our $VERSION = '0.26';
+our $VERSION = '0.27';
 
 use RDF::aREF::Decoder qw(qName languageTag);
 use Carp qw(croak);

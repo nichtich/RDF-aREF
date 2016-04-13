@@ -1,6 +1,7 @@
 # Changelog for RDF-aREF
 
 {{$NEXT}}
+  - Fix test failure caused by RDF::NS (#20)
 
 0.26  2016-03-01 10:14:22 CET
   - encode literal with datatype xsd:string as plain literal (#19)
