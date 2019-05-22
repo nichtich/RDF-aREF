@@ -53,6 +53,13 @@ module provides methods for decoding from aREF data to RDF triples
 ([RDF::aREF::Decoder](https://metacpan.org/pod/RDF::aREF::Decoder)), for encoding RDF data in aREF ([RDF::aREF::Encoder](https://metacpan.org/pod/RDF::aREF::Encoder)),
 and for querying parts of an RDF graph ([RDF::aREF::Query](https://metacpan.org/pod/RDF::aREF::Query)).
 
+# WARNING
+
+**aREF** has been an attempt to solve problems that meanwhile have largely been
+solved by [JSON-LD](https://json-ld.org/). Despite aRef having its own
+benefits, please consider using a more established technology (JSON-LD)
+instead!
+
 # EXPORTED FUNCTIONS
 
 The following functions are exported by default.
