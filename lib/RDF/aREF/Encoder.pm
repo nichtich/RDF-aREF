@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use v5.10;
 
-our $VERSION = '0.27';
+our $VERSION = '0.28';
 
 use RDF::NS;
 use RDF::aREF::Decoder qw(localName blankNodeIdentifier);
