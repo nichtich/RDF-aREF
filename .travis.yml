@@ -1,4 +1,7 @@
 language: perl
+arch:
+    - AMD64
+    - ppc64le
 perl:
     - "5.20"
     - "5.18"
